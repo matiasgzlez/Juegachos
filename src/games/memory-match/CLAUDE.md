@@ -2,7 +2,7 @@
 
 Juego de memoria de pares con dos modos muy distintos sobre el mismo tablero DOM:
 
-- **Solo (sin `?room=`)**: contrarreloj de 60 segundos. Tableros 4x4 (8 pares) que se rebarajan al completarse; el puntaje es el total de pares encontrados. Ranking global con `direction: "higher"`.
+- **Solo (sin `?room=`)**: completar un tablero 4x4 (8 pares) lo mas rapido y con menos movimientos posible (un movimiento = cada intento de par, se cuenta al dar vuelta la segunda carta). Sin limite de tiempo; el cronometro cuenta hacia arriba. Ranking global unico "combinado" igual que sliding-puzzle: se ordena por tiempo y los movimientos desempatan y se muestran al lado (`1:23.45 - 12 mov`).
 - **Sala (`?room=`)**: el primer juego de "pantalla compartida" del repo. Todos los jugadores ven el **mismo tablero** y juegan **por turnos** (regla clasica: encontrar un par = seguir jugando; fallar = pasa el turno). El puntaje de la ronda es la cantidad de pares propios.
 
 ## Module layout
@@ -33,6 +33,6 @@ Cableado estandar ademas del contrato minimo: usa el contexto extendido de `Room
 
 ## Gotchas
 
-- La direccion del ranking **debe** ser `higher` en ambos modos: `rankRound` usa una sola direccion por juego, por eso el modo solo puntua "pares en 60 s" y no "menos movimientos".
+- El modo sala reporta pares (`direction: "higher"`, usado por `rankRound`), pero el ranking solo se ordena por tiempo (menor mejor). Se resuelve con una **variante** "solo" que sobrescribe la direccion a `"lower"` via `variantDirection` en `scoring.ts`, y codifica tiempo + movimientos en un puntaje con `encodeTimeMoves` (compartido con sliding-puzzle). El puntaje base del juego nunca recibe envios del modo solo.
 - `renderCards` es declarativo (clases segun estado); el "mostrar dos cartas que no eran par" se logra con la lista temporal `holdUp` en el caller, no con estado en el Hud.
 - El tablero se dimensiona con `--cols` / `--rows` en CSS para que 6x6 no desborde en pantallas bajas.

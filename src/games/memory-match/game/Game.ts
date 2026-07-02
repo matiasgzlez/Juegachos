@@ -1,19 +1,21 @@
 import { initRoomMode, type RoomMode } from "../../../shared/room/roomMode";
+import { encodeTimeMoves } from "../../../shared/scoring";
 import {
   applyFlip,
   canFlip,
   createState,
   isComplete,
+  pairsOf,
   SOLO_DIMS,
   type MemoryState,
 } from "./board";
 import {
-  BEST_KEY,
+  BEST_MOVES_KEY,
+  BEST_TIME_KEY,
   COUNTDOWN_LABELS,
   COUNTDOWN_STEP,
   MAX_DT,
   REVEAL_HOLD_MS,
-  SOLO_TIME_LIMIT,
 } from "./constants";
 import { Hud } from "./Hud";
 import { SharedMatch } from "./sharedMatch";
@@ -32,10 +34,10 @@ export class Game {
   private shared: SharedMatch | null = null;
   private state: State = "ready";
 
-  // Modo solo (contrarreloj)
+  // Modo solo (completar el tablero midiendo tiempo y movimientos)
   private soloState: MemoryState | null = null;
-  private score = 0;
-  private timeLeft = SOLO_TIME_LIMIT;
+  private moves = 0;
+  private elapsed = 0;
   private holdUp: number[] = [];
   private animating = false;
 
@@ -44,10 +46,10 @@ export class Game {
 
   constructor(container: HTMLElement) {
     this.hud = new Hud(container);
-    // Parcial por timeout: pares propios del tablero compartido (o del
-    // contrarreloj, aunque en sala el solo nunca corre).
+    // Parcial por timeout en sala: pares propios del tablero compartido (el
+    // modo solo no corre nunca en sala, asi que getScore solo mira shared).
     this.room = initRoomMode("memory-match", {
-      getScore: () => (this.shared ? this.shared.myPairs() : this.score),
+      getScore: () => this.shared?.myPairs() ?? 0,
     });
 
     this.hud.showStart(this.loadBest(), this.room !== null);
@@ -77,8 +79,8 @@ export class Game {
     if (this.room) {
       this.hud.setTurnText("");
     } else {
-      this.score = 0;
-      this.timeLeft = SOLO_TIME_LIMIT;
+      this.moves = 0;
+      this.elapsed = 0;
       this.newSoloBoard();
     }
   }
@@ -119,17 +121,13 @@ export class Game {
       return;
     }
 
+    // Segunda carta: el intento cuenta como un movimiento (acierto o no).
+    this.moves++;
+
     if (reveal.matchedBy !== null) {
-      this.score++;
       SoundEffects.playMatch();
       this.renderSolo();
-      if (isComplete(next)) {
-        // Tablero completo: se renueva y el reloj sigue corriendo.
-        this.animating = true;
-        window.setTimeout(() => {
-          if (this.state === "playing") this.newSoloBoard();
-        }, 600);
-      }
+      if (isComplete(next)) this.endSolo();
     } else {
       SoundEffects.playFail();
       this.animating = true;
@@ -152,25 +150,32 @@ export class Game {
     );
     const owners = state.matchedBy.map((owner) => (owner === null ? null : 0));
     this.hud.renderCards(faceUp, owners);
-    this.hud.setStats(this.score, this.timeLeft);
+    this.hud.setSoloStats(this.moves, pairsOf(state, SOLO_PLAYER), SOLO_DIMS.pairs, this.elapsed);
   }
 
   private endSolo(): void {
     this.state = "over";
-    this.timeLeft = 0;
     SoundEffects.playVictory();
 
-    const best = this.loadBest();
-    const isNewBest = best === null || this.score > best;
-    if (isNewBest) localStorage.setItem(BEST_KEY, String(this.score));
+    const prev = this.loadBest();
+    const isNewBestTime = prev.time === null || this.elapsed < prev.time;
+    const isNewBestMoves = prev.moves === null || this.moves < prev.moves;
+    if (isNewBestTime) localStorage.setItem(BEST_TIME_KEY, String(this.elapsed));
+    if (isNewBestMoves) localStorage.setItem(BEST_MOVES_KEY, String(this.moves));
 
-    this.hud.showGameOver(this.score, isNewBest ? this.score : best ?? this.score, isNewBest);
-    this.hud.showRanking("memory-match", this.score);
+    this.hud.showGameOver(this.elapsed, this.moves, isNewBestTime || isNewBestMoves);
+    // Un unico ranking combinado: se ordena por tiempo, los movimientos
+    // desempatan y se muestran al lado (encodeTimeMoves).
+    this.hud.showSoloRanking(encodeTimeMoves(this.elapsed, this.moves));
   }
 
-  private loadBest(): number | null {
-    const raw = localStorage.getItem(BEST_KEY);
-    return raw === null ? null : parseInt(raw, 10);
+  private loadBest(): { time: number | null; moves: number | null } {
+    const rawTime = localStorage.getItem(BEST_TIME_KEY);
+    const rawMoves = localStorage.getItem(BEST_MOVES_KEY);
+    return {
+      time: rawTime === null ? null : parseFloat(rawTime),
+      moves: rawMoves === null ? null : parseInt(rawMoves, 10),
+    };
   }
 
   // ---------- Loop ----------
@@ -192,10 +197,14 @@ export class Game {
       } else {
         this.hud.showCountdown(COUNTDOWN_LABELS[index]);
       }
-    } else if (this.state === "playing" && !this.room) {
-      this.timeLeft -= dt;
-      this.hud.setStats(this.score, this.timeLeft);
-      if (this.timeLeft <= 0) this.endSolo();
+    } else if (this.state === "playing" && !this.room && this.soloState) {
+      this.elapsed += dt;
+      this.hud.setSoloStats(
+        this.moves,
+        pairsOf(this.soloState, SOLO_PLAYER),
+        SOLO_DIMS.pairs,
+        this.elapsed,
+      );
     }
   }
 

@@ -1,8 +1,13 @@
 import { LeaderboardPanel } from "../../../shared/LeaderboardPanel";
+import { formatClock } from "../../../shared/scoring";
 import { PLAYER_COLORS, symbolColor, symbolSvg } from "./symbols";
 
-function pairsLabel(n: number): string {
-  return `${n} ${n === 1 ? "par" : "pares"}`;
+/** "m:ss" para el cronometro en vivo (sin centesimas para que no vibre). */
+function formatMMSS(seconds: number): string {
+  const total = Math.floor(seconds);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
 }
 
 /** Entrada del marcador por jugador (modo sala). */
@@ -102,7 +107,7 @@ export class Hud {
     this.container.append(this.hudBar, this.playersPanel, boardWrapper, this.overlayEl, this.countdownEl);
   }
 
-  showStart(best: number | null, roomMode: boolean): void {
+  showStart(best: { time: number | null; moves: number | null }, roomMode: boolean): void {
     this.overlayEl.classList.remove("hidden");
     this.hudBar.classList.add("hidden");
     this.boardEl.classList.add("hidden");
@@ -111,37 +116,42 @@ export class Hud {
     this.titleEl.textContent = "MEMORIA";
     this.subtitleEl.textContent = roomMode
       ? "Tablero compartido: por turnos, quien encuentra un par sigue jugando. Gana quien junte mas pares."
-      : "Encuentra la mayor cantidad de pares en 60 segundos. Si aciertas, el tablero se renueva al completarse.";
+      : "Da vuelta las cartas y encontra todos los pares lo mas rapido y con menos movimientos posible.";
 
     this.scoreEl.style.display = "none";
     this.bestEl.style.display = "block";
-    this.bestEl.textContent =
-      !roomMode && best !== null ? `MEJOR RECORD: ${pairsLabel(best)}` : roomMode ? "" : "SIN RECORD AUN";
+    if (roomMode) {
+      this.bestEl.textContent = "";
+    } else if (best.time !== null && best.moves !== null) {
+      this.bestEl.textContent = `MEJOR RECORD: ${formatClock(best.time * 100)} - ${best.moves} mov`;
+    } else {
+      this.bestEl.textContent = "SIN RECORD AUN";
+    }
 
     this.hintEl.textContent = "presiona ENTER o toca la pantalla para comenzar";
     this.leaderboard.clear();
   }
 
-  showGameOver(pairs: number, best: number, isNewBest: boolean): void {
+  /** Fin del modo solo: tiempo de resolucion y movimientos usados. */
+  showGameOver(elapsedSec: number, moves: number, isNewBest: boolean): void {
     this.overlayEl.classList.remove("hidden");
     this.hudBar.classList.add("hidden");
     this.boardEl.classList.add("hidden");
 
-    this.titleEl.textContent = isNewBest ? "¡NUEVO RECORD!" : "SE ACABO EL TIEMPO";
+    this.titleEl.textContent = isNewBest ? "¡NUEVO RECORD!" : "¡COMPLETADO!";
     this.subtitleEl.textContent = "";
 
     this.scoreEl.style.display = "block";
-    this.scoreEl.textContent = `Pares encontrados: ${pairs}`;
+    this.scoreEl.innerHTML = `Tiempo: ${formatClock(elapsedSec * 100)}<br>Movimientos: ${moves}`;
 
-    this.bestEl.style.display = "block";
-    this.bestEl.textContent = `MEJOR RECORD: ${pairsLabel(best)}`;
+    this.bestEl.style.display = "none";
 
     this.hintEl.textContent = "presiona ENTER para volver a jugar";
   }
 
-  /** Muestra el ranking global (mas pares = mejor). */
-  showRanking(gameId: string, pairs: number): void {
-    void this.leaderboard.render(gameId, { score: pairs });
+  /** Ranking combinado del modo solo (ordenado por tiempo, mov. de desempate). */
+  showSoloRanking(encodedScore: number): void {
+    void this.leaderboard.render("memory-match", { score: encodedScore, variant: "solo" });
   }
 
   showCountdown(text: string | null): void {
@@ -233,16 +243,18 @@ export class Hud {
     });
   }
 
-  setStats(pairs: number, timeLeftSec: number | null): void {
+  /** Marcador del modo sala: pares propios (el tiempo va en la franja de sala). */
+  setStats(pairs: number): void {
     this.pairsIndicator.textContent = `PARES: ${pairs}`;
-    if (timeLeftSec === null) {
-      this.timeIndicator.textContent = "";
-    } else {
-      const total = Math.max(0, Math.ceil(timeLeftSec));
-      const m = Math.floor(total / 60);
-      const s = total % 60;
-      this.timeIndicator.textContent = `TIEMPO: ${m}:${s.toString().padStart(2, "0")}`;
-    }
+    this.timeIndicator.textContent = "";
+  }
+
+  /** Marcador del modo solo: movimientos, progreso de pares y cronometro. */
+  setSoloStats(moves: number, pairsFound: number, totalPairs: number, elapsedSec: number): void {
+    this.pairsIndicator.textContent = `MOVIMIENTOS: ${moves}`;
+    this.turnIndicator.textContent = `PARES: ${pairsFound}/${totalPairs}`;
+    this.turnIndicator.classList.remove("is-mine");
+    this.timeIndicator.textContent = `TIEMPO: ${formatMMSS(elapsedSec)}`;
   }
 
   /** Banner de turno / estado del tablero compartido. */

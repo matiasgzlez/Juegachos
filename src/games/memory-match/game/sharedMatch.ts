@@ -231,7 +231,7 @@ export class SharedMatch {
     this.hud.renderCards(faceUp, owners);
 
     const me = this.room.me;
-    this.hud.setStats(pairsOf(state, me), null);
+    this.hud.setStats(pairsOf(state, me));
 
     const complete = isComplete(state);
     if (complete) {
