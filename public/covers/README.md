@@ -83,6 +83,12 @@ Square 1:1 video game cover art, bold indie game key art style, vibrant saturate
 Square 1:1 video game cover art, bold indie game key art style, vibrant saturated colors, dramatic lighting, clean composition with a strong focal subject, slight retro-arcade flavor, high detail digital illustration, no watermark, no borders. A spinning wooden log target covered in embedded ninja kunai knives, one kunai flying toward it with a golden motion trail, dark dojo background with paper lanterns, amber and gold palette, dramatic focus on the blade. The game title "KUNAI STRIKE" is integrated into the artwork as a bold stylized videogame logo, large and readable, spelled exactly "KUNAI STRIKE".
 ```
 
+## Odd One Out — guardar como `odd-one-out.jpg`
+
+```text
+Square 1:1 video game cover art, bold indie game key art style, vibrant saturated colors, dramatic lighting, clean composition with a strong focal subject, slight retro-arcade flavor, high detail digital illustration, no watermark, no borders. A neat glowing grid of rounded square tiles all the same soft purple except one tile with a subtly different shade that clearly stands out, a bright spotlight and a magnifying glass focusing on the odd tile, a thin ticking countdown arc wrapping around the grid, minimal geometric composition, purple and violet neon palette on a dark background. The game title "ODD ONE OUT" is integrated into the artwork as a bold stylized videogame logo, large and readable, spelled exactly "ODD ONE OUT".
+```
+
 ## Fondo del banner de salas — guardar como `rooms-banner.jpg`
 
 Fondo del banner "¡Jugá con amigos!" de la home. El banner es una franja muy
