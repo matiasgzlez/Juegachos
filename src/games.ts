@@ -119,5 +119,13 @@ export const games: GameEntry[] = [
     accent: "#f5a623",
     category: "Precisión",
   },
+  {
+    id: "rocket-arena",
+    title: "Rocket SpaceX",
+    description: "Fútbol de autos en 3D estilo Rocket League: 2v2 con bots, o en salas con los autos de todos en vivo.",
+    path: "/games/rocket-arena/",
+    accent: "#3ba7ff",
+    category: "Carreras",
+  },
 ];
 

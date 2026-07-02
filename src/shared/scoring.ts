@@ -40,6 +40,10 @@ export const GAME_SCORING: Record<string, GameScoring> = {
       return `${m}:${String(s).padStart(2, "0")}.${String(cs).padStart(2, "0")}`;
     },
   },
+  "rocket-arena": {
+    direction: "higher",
+    format: (n) => `${n} ${n === 1 ? "gol" : "goles"}`,
+  },
   "sliding-puzzle": {
     direction: "lower",
     variants: ["3", "4", "5"],
