@@ -9,6 +9,7 @@ import { Player } from "./Player";
 import { ObstacleSpawner } from "./ObstacleSpawner";
 import { InputController } from "./InputController";
 import { Hud } from "./Hud";
+import { initRoomMode, type RoomMode } from "../../../shared/room/roomMode";
 import {
   BACKGROUND_COLOR,
   BASE_SPEED,
@@ -38,6 +39,8 @@ export class Game {
   private readonly spawner: ObstacleSpawner;
   private readonly input: InputController;
   private readonly hud: Hud;
+  /** Modo sala (multijugador): activo solo con ?room= en la URL. */
+  private readonly room: RoomMode | null;
 
   private readonly container: HTMLElement;
   private state: GameState = "ready";
@@ -87,12 +90,16 @@ export class Game {
     this.hud.setBest(this.best);
     this.hud.showStart();
 
+    this.room = initRoomMode("neon-cylinder", { getScore: () => this.score });
+
     window.addEventListener("resize", this.onResize);
     this.renderer.setAnimationLoop(this.tick);
   }
 
   private handleActivate(): void {
     if (this.state === "playing" || this.state === "countdown") return;
+    // En modo sala se juega una sola partida por ronda: sin reintento.
+    if (this.room && this.state === "gameover") return;
     this.beginCountdown();
   }
 
@@ -126,7 +133,8 @@ export class Game {
     }
     this.hud.setBest(this.best);
     this.hud.showGameOver(this.score, this.best);
-    this.hud.showRanking("neon-cylinder", this.score);
+    if (this.room) this.room.reportScore(this.score);
+    else this.hud.showRanking("neon-cylinder", this.score);
   }
 
   private readonly tick = (): void => {

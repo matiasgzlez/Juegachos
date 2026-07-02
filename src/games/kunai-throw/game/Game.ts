@@ -17,6 +17,7 @@ import { Log } from "./Log";
 import { drawKunai } from "./Kunai";
 import { Hud } from "./Hud";
 import { SoundEffects } from "./SoundEffects";
+import { initRoomMode, type RoomMode } from "../../../shared/room/roomMode";
 
 type State = "ready" | "countdown" | "playing" | "gameover";
 
@@ -34,6 +35,8 @@ export class Game {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly hud: Hud;
   private readonly log = new Log();
+  /** Modo sala (multijugador): activo solo con ?room= en la URL. */
+  private readonly room: RoomMode | null;
 
   private state: State = "ready";
   private score = 0;
@@ -59,6 +62,8 @@ export class Game {
     this.hud = new Hud(container, () => this.onPrimary());
     this.hud.setBest(this.best);
     this.hud.showStart();
+
+    this.room = initRoomMode("kunai-throw", { getScore: () => this.score });
 
     window.addEventListener("keydown", this.handleKeyDown);
     this.canvas.addEventListener("pointerdown", this.handlePointer);
@@ -92,6 +97,8 @@ export class Game {
 
   /** Space / Enter / tap: start from the menus, or throw during play. */
   private onPrimary(): void {
+    // En modo sala se juega una sola partida por ronda: sin reintento.
+    if (this.state === "gameover" && this.room) return;
     if (this.state === "ready" || this.state === "gameover") {
       this.beginCountdown();
     } else if (this.state === "playing") {
@@ -173,7 +180,8 @@ export class Game {
       this.hud.setBest(this.best);
     }
     this.hud.showGameOver(this.score, this.best);
-    this.hud.showRanking("kunai-throw", this.score);
+    if (this.room) this.room.reportScore(this.score);
+    else this.hud.showRanking("kunai-throw", this.score);
   }
 
   private tick = (now: number): void => {

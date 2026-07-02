@@ -8,12 +8,15 @@ import {
   MAX_DT 
 } from "./constants";
 import { Hud, type RoundStatus } from "./Hud";
+import { initRoomMode, type RoomMode } from "../../../shared/room/roomMode";
 
 type State = "ready" | "countdown" | "waitingForTrigger" | "triggerActive" | "earlyClick" | "roundFinished" | "gameOver";
 
 export class Game {
   private readonly hud: Hud;
-  
+  /** Modo sala (multijugador): activo solo con ?room= en la URL. */
+  private readonly room: RoomMode | null;
+
   private state: State = "ready";
   private currentRound = 0;
   private roundTimes: number[] = [];
@@ -41,6 +44,11 @@ export class Game {
     // Init HUD
     this.hud = new Hud(container);
     this.hud.showStart(this.bestAverage);
+
+    // Parcial por timeout: promedio de las rondas completadas hasta ahora.
+    this.room = initRoomMode("reaction-time", {
+      getScore: () => this.calculateCurrentAverage() ?? 0,
+    });
     
     // Retrieve reference to the reaction card for input binding
     this.reactionCardEl = container.querySelector(".reaction-card")!;
@@ -120,7 +128,8 @@ export class Game {
         break;
         
       case "gameOver":
-        // Restart game
+        // En modo sala se juega una sola partida por ronda: sin reintento.
+        if (this.room) return;
         this.beginCountdown();
         break;
     }
@@ -185,7 +194,8 @@ export class Game {
     
     this.state = "gameOver";
     this.hud.showGameOver(this.roundTimes, average, isNewBest, this.bestAverage);
-    this.hud.showRanking("reaction-time", average);
+    if (this.room) this.room.reportScore(average);
+    else this.hud.showRanking("reaction-time", average);
   }
   
   private calculateCurrentAverage(): number | null {

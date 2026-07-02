@@ -16,18 +16,18 @@ export const HIT_LINE_Y = VIEW_HEIGHT - 130;
 export const NOTE_HALF_HEIGHT = 26;
 
 /** Downward note speed at the start of a run, units/s. */
-export const BASE_NOTE_SPEED = 320;
+export const BASE_NOTE_SPEED = 240;
 /** Extra speed added per point scored, units/s (difficulty ramp). */
-export const SPEED_PER_POINT = 0.9;
+export const SPEED_PER_POINT = 0.07;
 /** Speed never exceeds this, units/s. */
-export const MAX_NOTE_SPEED = 620;
+export const MAX_NOTE_SPEED = 600;
 
 /** Seconds between note spawns at the start of a run. */
-export const BASE_SPAWN_INTERVAL = 0.72;
+export const BASE_SPAWN_INTERVAL = 1.2;
 /** Spawn interval shrinks by this per point, seconds. */
-export const SPAWN_DECAY_PER_POINT = 0.004;
+export const SPAWN_DECAY_PER_POINT = 0.00017;
 /** Spawns never come faster than this, seconds. */
-export const MIN_SPAWN_INTERVAL = 0.32;
+export const MIN_SPAWN_INTERVAL = 0.35;
 
 // --- Judgment windows (distance in view units from the hit line at tap time) ---
 // Widened so timing is forgiving.

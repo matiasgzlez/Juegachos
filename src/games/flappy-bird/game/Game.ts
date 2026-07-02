@@ -4,6 +4,7 @@ import { PipeField } from "./PipeField";
 import { Renderer } from "./Renderer";
 import { InputController } from "./InputController";
 import { Hud } from "./Hud";
+import { initRoomMode, type RoomMode } from "../../../shared/room/roomMode";
 
 type State = "ready" | "countdown" | "playing" | "dead";
 
@@ -22,6 +23,8 @@ export class Game {
   private readonly renderer = new Renderer();
   private readonly hud: Hud;
   private readonly input: InputController;
+  /** Modo sala (multijugador): activo solo con ?room= en la URL. */
+  private readonly room: RoomMode | null;
 
   private state: State = "ready";
   private score = 0;
@@ -44,6 +47,8 @@ export class Game {
     this.hud.showScore(false);
     this.hud.showStart();
 
+    this.room = initRoomMode("flappy-bird", { getScore: () => this.score });
+
     // Listen on the container, not the canvas: the start / game-over overlay
     // sits above the canvas, so taps there must still start the game (mobile
     // has no Enter key). The leaderboard stops propagation for its own UI.
@@ -65,6 +70,8 @@ export class Game {
         this.bird.flap();
         break;
       case "dead":
+        // En modo sala se juega una sola partida por ronda: sin reintento.
+        if (this.room) return;
         if (this.deadFor > 0.6) this.beginCountdown();
         break;
     }
@@ -100,7 +107,8 @@ export class Game {
       this.hud.setBest(this.best);
     }
     this.hud.showGameOver(this.score, this.best);
-    this.hud.showRanking("flappy-bird", this.score);
+    if (this.room) this.room.reportScore(this.score);
+    else this.hud.showRanking("flappy-bird", this.score);
   }
 
   private tick = (now: number): void => {

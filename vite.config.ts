@@ -10,6 +10,10 @@ function collectHtmlEntries(): Record<string, string> {
     main: resolve(root, "index.html"),
   };
 
+  // Pagina de salas multijugador (no es un juego, no vive bajo games/).
+  const roomsHtml = resolve(root, "rooms/index.html");
+  if (existsSync(roomsHtml)) entries.rooms = roomsHtml;
+
   for (const dirent of readdirSync(gamesDir, { withFileTypes: true })) {
     if (!dirent.isDirectory()) continue;
     const htmlPath = resolve(gamesDir, dirent.name, "index.html");

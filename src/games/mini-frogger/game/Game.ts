@@ -10,6 +10,7 @@ import { Frog } from "./Frog";
 import { Obstacle } from "./Obstacle";
 import { Renderer } from "./Renderer";
 import { Hud } from "./Hud";
+import { initRoomMode, type RoomMode } from "../../../shared/room/roomMode";
 
 type State = "ready" | "playing" | "dead" | "gameover";
 
@@ -21,6 +22,8 @@ export class Game {
   private readonly frog: Frog;
   private readonly renderer: Renderer;
   private readonly hud: Hud;
+  /** Modo sala (multijugador): activo solo con ?room= en la URL. */
+  private readonly room: RoomMode | null;
 
   private state: State = "ready";
   private score = 0;
@@ -63,6 +66,8 @@ export class Game {
     this.hud.setBest(this.best);
     this.hud.showStartScreen(this.best);
 
+    this.room = initRoomMode("mini-frogger", { getScore: () => this.score });
+
     // Setup input listeners
     window.addEventListener("keydown", (e) => this.handleKeyDown(e));
 
@@ -89,6 +94,8 @@ export class Game {
   }
 
   private onAction(): void {
+    // En modo sala se juega una sola partida por ronda: sin reintento.
+    if (this.state === "gameover" && this.room) return;
     if (this.state === "ready" || this.state === "gameover") {
       this.start();
     }
@@ -385,7 +392,8 @@ export class Game {
     }
 
     this.hud.showGameOver(this.score, this.best);
-    this.hud.showRanking("mini-frogger", this.score);
+    if (this.room) this.room.reportScore(this.score);
+    else this.hud.showRanking("mini-frogger", this.score);
   }
 
   private tick(timestamp: number): void {

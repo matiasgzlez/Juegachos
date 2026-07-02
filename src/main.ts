@@ -13,6 +13,15 @@ header.innerHTML = `
   <p class="menu__subtitle">Elegí un juego para empezar</p>
 `;
 
+// Salas multijugador: solo si hay credenciales (misma condicion que el ranking).
+if (isLeaderboardEnabled()) {
+  const roomsLink = document.createElement("a");
+  roomsLink.className = "menu__rooms";
+  roomsLink.href = "/rooms/";
+  roomsLink.textContent = "Jugar con amigos";
+  header.append(roomsLink);
+}
+
 const grid = document.createElement("div");
 grid.className = "menu__grid";
 

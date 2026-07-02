@@ -3,6 +3,7 @@ import { Ball } from "./Ball";
 import { Track } from "./Track";
 import { InputController } from "./InputController";
 import { Hud } from "./Hud";
+import { initRoomMode, type RoomMode } from "../../../shared/room/roomMode";
 import {
   BACKGROUND_COLOR,
   BASE_SPEED,
@@ -42,6 +43,8 @@ export class Game {
   private readonly ball = new Ball();
   private readonly input: InputController;
   private readonly hud: Hud;
+  /** Modo sala (multijugador): activo solo con ?room= en la URL. */
+  private readonly room: RoomMode | null;
 
   private readonly lookTarget = new THREE.Vector3();
 
@@ -107,6 +110,8 @@ export class Game {
     this.hud.setBest(this.best);
     this.hud.showStart();
 
+    this.room = initRoomMode("jump-ball", { getScore: () => this.score });
+
     this.updateCamera(1);
     window.addEventListener("resize", this.onResize);
     this.renderer.setAnimationLoop(this.tick);
@@ -114,7 +119,8 @@ export class Game {
 
   private handleActivate(): void {
     if (this.state === "playing" || this.state === "countdown") return;
-    if (this.state === "gameover" && this.deadFor < 0.6) return;
+    // En modo sala se juega una sola partida por ronda: sin reintento.
+    if (this.state === "gameover" && (this.room || this.deadFor < 0.6)) return;
     this.beginCountdown();
   }
 
@@ -167,7 +173,8 @@ export class Game {
       this.hud.setBest(this.best);
     }
     this.hud.showGameOver(this.score, this.best);
-    this.hud.showRanking("jump-ball", this.score);
+    if (this.room) this.room.reportScore(this.score);
+    else this.hud.showRanking("jump-ball", this.score);
   }
 
   private readonly tick = (): void => {

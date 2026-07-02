@@ -16,6 +16,7 @@ import { NoteField, type Judgment } from "./NoteField";
 import { Renderer } from "./Renderer";
 import { InputController } from "./InputController";
 import { Hud } from "./Hud";
+import { initRoomMode, type RoomMode } from "../../../shared/room/roomMode";
 
 type State = "ready" | "countdown" | "playing" | "dead";
 
@@ -34,6 +35,8 @@ export class Game {
   private readonly renderer = new Renderer();
   private readonly hud: Hud;
   private readonly input: InputController;
+  /** Modo sala (multijugador): activo solo con ?room= en la URL. */
+  private readonly room: RoomMode | null;
 
   private state: State = "ready";
   private score = 0;
@@ -58,6 +61,8 @@ export class Game {
     this.hud.setHealth(this.health);
     this.hud.showHud(false);
     this.hud.showStart();
+
+    this.room = initRoomMode("rhythm-tap", { getScore: () => this.score });
 
     this.input = new InputController(
       this.canvas,
@@ -102,7 +107,8 @@ export class Game {
   /** Enter or a tap on a start / game-over screen begins the countdown. */
   private requestStart(): void {
     if (this.state === "ready") this.beginCountdown();
-    else if (this.state === "dead" && this.deadFor > 0.6) this.beginCountdown();
+    // En modo sala se juega una sola partida por ronda: sin reintento.
+    else if (this.state === "dead" && !this.room && this.deadFor > 0.6) this.beginCountdown();
   }
 
   /** Resets the notes and runs the 3-2-1-YA countdown before play begins. */
@@ -172,7 +178,8 @@ export class Game {
       this.hud.setBest(this.best);
     }
     this.hud.showGameOver(this.score, this.best);
-    this.hud.showRanking("rhythm-tap", this.score);
+    if (this.room) this.room.reportScore(this.score);
+    else this.hud.showRanking("rhythm-tap", this.score);
   }
 
   private tick = (now: number): void => {

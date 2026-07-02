@@ -3,6 +3,7 @@ import { Tower } from "./Tower";
 import { Renderer } from "./Renderer";
 import { InputController } from "./InputController";
 import { Hud } from "./Hud";
+import { initRoomMode, type RoomMode } from "../../../shared/room/roomMode";
 
 type State = "ready" | "countdown" | "playing" | "dead";
 
@@ -20,6 +21,8 @@ export class Game {
   private readonly renderer = new Renderer();
   private readonly hud: Hud;
   private readonly input: InputController;
+  /** Modo sala (multijugador): activo solo con ?room= en la URL. */
+  private readonly room: RoomMode | null;
 
   private state: State = "ready";
   private best = Number(localStorage.getItem(BEST_KEY)) || 0;
@@ -39,6 +42,8 @@ export class Game {
     this.hud.setBest(this.best);
     this.hud.showScore(false);
     this.hud.showStart();
+
+    this.room = initRoomMode("stack-tower", { getScore: () => this.tower.score });
 
     this.tower.reset();
 
@@ -60,6 +65,8 @@ export class Game {
         this.place();
         break;
       case "dead":
+        // En modo sala se juega una sola partida por ronda: sin reintento.
+        if (this.room) return;
         if (this.deadFor > 0.5) this.beginCountdown();
         break;
     }
@@ -111,7 +118,8 @@ export class Game {
       this.hud.setBest(this.best);
     }
     this.hud.showGameOver(score, this.best);
-    this.hud.showRanking("stack-tower", score);
+    if (this.room) this.room.reportScore(score);
+    else this.hud.showRanking("stack-tower", score);
   }
 
   private tick = (now: number): void => {

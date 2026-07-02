@@ -5,6 +5,7 @@ import { Particle } from "./Particle";
 import { Hud } from "./Hud";
 import { InputController } from "./InputController";
 import { SoundEffects } from "./SoundEffects";
+import { initRoomMode, type RoomMode } from "../../../shared/room/roomMode";
 import {
   BEST_KEY,
   COUNTDOWN_LABELS,
@@ -37,6 +38,8 @@ export class Game {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly hud: Hud;
   private input!: InputController;
+  /** Modo sala (multijugador): activo solo con ?room= en la URL. */
+  private readonly room: RoomMode | null;
 
   private state: State = "ready";
   private score = 0;
@@ -71,6 +74,8 @@ export class Game {
     this.bestScore = Number(localStorage.getItem(BEST_KEY) || 0);
     this.hud.setBest(this.bestScore);
     this.hud.showStart();
+
+    this.room = initRoomMode("asteroids", { getScore: () => this.score });
 
     // Initialize entities
     this.initGameObjects();
@@ -118,6 +123,8 @@ export class Game {
   }
 
   private handleStartAction(): void {
+    // En modo sala se juega una sola partida por ronda: sin reintento.
+    if (this.state === "gameover" && this.room) return;
     if (this.state === "ready" || this.state === "gameover") {
       this.beginCountdown();
     }
@@ -211,7 +218,8 @@ export class Game {
         this.hud.setBest(this.bestScore);
       }
       this.hud.showGameOver(this.score, this.bestScore);
-      this.hud.showRanking("asteroids", this.score);
+      if (this.room) this.room.reportScore(this.score);
+      else this.hud.showRanking("asteroids", this.score);
     } else {
       // Clean up nearby asteroids so user doesn't die immediately on respawn
       const safeRadius = 150;

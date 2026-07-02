@@ -1,0 +1,330 @@
+:root {
+  color-scheme: dark;
+  --bg: #05000a;
+  --ink: #eef0ff;
+  --accent: #0ff8ff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  background: var(--bg);
+  font-family: "Consolas", "Courier New", monospace;
+  color: var(--ink);
+}
+
+body {
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Misma aurora neon de la landing. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -20%;
+  z-index: -1;
+  background:
+    radial-gradient(38% 42% at 18% 22%, rgba(255, 0, 230, 0.18), transparent 70%),
+    radial-gradient(40% 44% at 82% 78%, rgba(15, 248, 255, 0.16), transparent 70%),
+    radial-gradient(50% 50% at 50% 50%, rgba(120, 0, 255, 0.1), transparent 75%);
+  filter: blur(10px);
+}
+
+.back-link {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 30;
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: #fff;
+  text-decoration: none;
+  opacity: 0.7;
+}
+
+.back-link:hover {
+  opacity: 1;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(48px, 8vh, 80px) 20px 56px;
+}
+
+.rooms__title {
+  font-size: clamp(36px, 8vw, 56px);
+  line-height: 1;
+  letter-spacing: clamp(4px, 1.5vw, 10px);
+  background: linear-gradient(120deg, #ff00e6, #a56bff 45%, #0ff8ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 24px rgba(255, 0, 230, 0.35));
+  margin-bottom: 10px;
+}
+
+.rooms__subtitle {
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: #b7bce8;
+  opacity: 0.85;
+  margin-bottom: 34px;
+  text-align: center;
+}
+
+.rooms__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.panel {
+  padding: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  background: rgba(14, 10, 24, 0.62);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.panel__title {
+  font-size: 13px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+.panel__row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.panel__label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #b7bce8;
+  margin: 14px 0 8px;
+}
+
+.panel__label:first-of-type {
+  margin-top: 0;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font: inherit;
+  letter-spacing: 1px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.input--code {
+  text-transform: uppercase;
+  letter-spacing: 5px;
+  font-weight: 700;
+}
+
+.btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: rgba(15, 248, 255, 0.12);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.btn--primary {
+  width: 100%;
+  margin-top: 16px;
+  padding: 13px 18px;
+  font-weight: 700;
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.choices {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.choice {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  color: #c3c7ec;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.choice.is-active {
+  color: #fff;
+  border-color: var(--accent);
+  background: rgba(15, 248, 255, 0.14);
+}
+
+.playlist {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.playlist__item {
+  --game-accent: #0ff8ff;
+  position: relative;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: #c3c7ec;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.playlist__item.is-picked {
+  color: #fff;
+  border-color: var(--game-accent);
+  background: color-mix(in srgb, var(--game-accent) 14%, transparent);
+}
+
+.playlist__order {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--game-accent);
+  color: #05000a;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.hint {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #8b90b8;
+  margin-top: 10px;
+  line-height: 1.5;
+}
+
+.error {
+  margin-top: 12px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #ff6d8a;
+  min-height: 1em;
+}
+
+/* ---------- Lobby ---------- */
+
+.lobby__code {
+  font-size: clamp(38px, 9vw, 54px);
+  font-weight: 700;
+  letter-spacing: 12px;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 0 24px rgba(15, 248, 255, 0.5);
+  margin: 6px 0 14px;
+}
+
+.lobby__players {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lobby__player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 14px;
+}
+
+.lobby__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #555a80;
+  flex-shrink: 0;
+}
+
+.lobby__dot.is-online {
+  background: #39ff88;
+  box-shadow: 0 0 8px rgba(57, 255, 136, 0.7);
+}
+
+.lobby__host-tag {
+  margin-left: auto;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #ffd75e;
+}
+
+.lobby__settings {
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #b7bce8;
+  line-height: 1.7;
+}
+
+.lobby__waiting {
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #8b90b8;
+  margin-top: 16px;
+}

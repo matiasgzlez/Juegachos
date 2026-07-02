@@ -7,11 +7,14 @@ import {
 } from "./constants";
 import { Hud } from "./Hud";
 import { SoundEffects } from "./SoundEffects";
+import { initRoomMode, ROOM_VARIANTS, type RoomMode } from "../../../shared/room/roomMode";
 
 type State = "ready" | "countdown" | "playing" | "victory";
 
 export class Game {
   private readonly hud: Hud;
+  /** Modo sala (multijugador): activo solo con ?room= en la URL. */
+  private readonly room: RoomMode | null;
   private state: State = "ready";
   
   // Grid parameters
@@ -31,7 +34,17 @@ export class Game {
   constructor(container: HTMLElement) {
     this.hud = new Hud(container);
     this.hud.showStart(this.handleSelectSize);
-    
+
+    // Parcial por timeout: movimientos hechos (points.ts sabe que un parcial
+    // "lower" sin resolver no es comparable con una victoria).
+    this.room = initRoomMode("sliding-puzzle", { getScore: () => this.moves });
+    if (this.room) {
+      // En sala todos juegan el mismo tablero: tamano fijo, sin selector.
+      this.size = parseInt(ROOM_VARIANTS["sliding-puzzle"], 10);
+      const selector = container.querySelector<HTMLElement>(".overlay__size-selector");
+      if (selector) selector.style.display = "none";
+    }
+
     this.bindInputs();
     
     this.lastTime = performance.now();
@@ -48,6 +61,8 @@ export class Game {
 
   private handleKeyDown = (e: KeyboardEvent): void => {
     if (e.key === "Enter") {
+      // En modo sala se juega una sola partida por ronda: sin reintento.
+      if (this.state === "victory" && this.room) return;
       if (this.state === "ready" || this.state === "victory") {
         this.beginCountdown();
       }
@@ -268,7 +283,8 @@ export class Game {
       bestTime,
       this.size
     );
-    this.hud.showRanking("sliding-puzzle", this.moves, this.size);
+    if (this.room) this.room.reportScore(this.moves);
+    else this.hud.showRanking("sliding-puzzle", this.moves, this.size);
   }
 
   private tick = (now: number): void => {
