@@ -25,6 +25,8 @@ const BROADCAST_INTERVAL = 0.05;
 
 const COUNTDOWN_LABELS = ["3", "2", "1", "YA"];
 const COUNTDOWN_STEP = 0.75;
+/** Velocidad de interpolacion de la paleta rival (mayor = mas pegado, menos suave). */
+const PADDLE_LERP_RATE = 18;
 
 export class Game {
   private readonly canvas: HTMLCanvasElement;
@@ -44,6 +46,7 @@ export class Game {
   private hasOpponent = false;
   private rolesReady = false;
   private opponentPaddleY = VIEW_HEIGHT / 2 - PADDLE_HEIGHT / 2;
+  private opponentPaddleTargetY = VIEW_HEIGHT / 2 - PADDLE_HEIGHT / 2;
   private broadcastTimer = 0;
 
   private ballTargetX = VIEW_WIDTH / 2;
@@ -122,8 +125,9 @@ export class Game {
 
     if (this.hasOpponent) {
       this.pongChan = new PongChannel(room.code, room.me);
+      // P1 recibe la paleta de P2 por su propio evento "paddle".
       this.pongChan.onPaddle((_player, y) => {
-        this.opponentPaddleY = y;
+        this.opponentPaddleTargetY = y;
       });
       if (!this.amPlayer1) {
         this.pongChan.onBall((state) => {
@@ -135,6 +139,8 @@ export class Game {
           this.ball.hits = state.hits;
           this.score = state.p2Score;
           this.opponentScore = state.p1Score;
+          // La paleta de P1 viaja adosada a la pelota (un solo mensaje).
+          this.opponentPaddleTargetY = state.paddleY;
           this.hasReceivedBall = true;
         });
       }
@@ -157,6 +163,7 @@ export class Game {
     this.aiPaddle.reset();
     this.ball.reset();
     this.opponentPaddleY = VIEW_HEIGHT / 2 - PADDLE_HEIGHT / 2;
+    this.opponentPaddleTargetY = VIEW_HEIGHT / 2 - PADDLE_HEIGHT / 2;
     this.hasReceivedBall = false;
     this.hud.showScore(false);
     this.hud.hide();
@@ -246,7 +253,15 @@ export class Game {
     this.checkCollisionsRoom();
   }
 
+  /** Suaviza la paleta rival hacia la ultima posicion recibida (anti-salto). */
+  private smoothOpponentPaddle(dt: number): void {
+    const t = Math.min(1, dt * PADDLE_LERP_RATE);
+    this.opponentPaddleY += (this.opponentPaddleTargetY - this.opponentPaddleY) * t;
+  }
+
   private updateOnline(dt: number): void {
+    this.smoothOpponentPaddle(dt);
+
     if (this.amPlayer1) {
       this.player.y += this.input.p1Dir * PLAYER_SPEED * dt;
       this.player.clamp();
@@ -260,10 +275,10 @@ export class Game {
         return;
       }
 
+      // P1 manda un solo mensaje por tick: la pelota lleva adosada su paleta.
       this.broadcastTimer += dt;
       if (this.broadcastTimer >= BROADCAST_INTERVAL) {
         this.broadcastTimer = 0;
-        this.pongChan!.sendPaddle(this.player.y);
         this.broadcastBall();
       }
     } else {
@@ -281,7 +296,7 @@ export class Game {
       if (this.score >= SCORE_LIMIT || this.opponentScore >= SCORE_LIMIT) {
         this.die();
       }
-      this.hud.showScoreRoom(this.amPlayer1 ? this.score : this.opponentScore, this.amPlayer1 ? this.opponentScore : this.score);
+      this.hud.showScoreRoom(this.opponentScore, this.score);
 
       this.broadcastTimer += dt;
       if (this.broadcastTimer >= BROADCAST_INTERVAL) {
@@ -301,6 +316,8 @@ export class Game {
       hits: this.ball.hits,
       p1Score: this.amPlayer1 ? this.score : this.opponentScore,
       p2Score: this.amPlayer1 ? this.opponentScore : this.score,
+      // Solo P1 emite la pelota, asi que esta es siempre su paleta izquierda.
+      paddleY: this.player.y,
     });
   }
 

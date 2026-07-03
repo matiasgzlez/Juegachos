@@ -85,6 +85,7 @@ export const GAME_SCORING: Record<string, GameScoring> = {
   },
   "pong": { direction: "higher" },
   "block-paddle": { direction: "higher" },
+  "western-shoot": { direction: "higher" },
 };
 
 /**

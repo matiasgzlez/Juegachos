@@ -49,7 +49,9 @@ With `?room=` in the URL and Supabase connected, Pong becomes **online player-vs
 
 - **P2 is ball receiver.** P2 (odd index, right paddle) receives ball state from P1 via broadcast and renders it with dead reckoning (velocity advances + 30% correction per frame toward the latest target). P2 sends their own paddle position to P1 via broadcast (event `"paddle"`).
 
-- **Both paddle positions are synced** via the same channel (event `"paddle"`). Each player broadcasts their own paddle Y at 20 fps. The opponent's paddle is displayed at the latest received position.
+- **One message per tick, and paddle rides the ball.** To stay under the Realtime rate limit, each side broadcasts exactly one message per 20 fps tick. P1's `"ball"` payload carries P1's paddle Y (`BallState.paddleY`), so P1 never sends a separate `"paddle"` event; only P2 sends `"paddle"` (its right paddle). Sending paddle + ball separately from P1 was 40 msg/s, over the default 10 msg/s ceiling — messages queued and both paddle and ball lagged/teleported. The ceiling is raised to 40 in `src/shared/supabase.ts` (`realtime.params.eventsPerSecond`), shared by all real-time games.
+
+- **Opponent paddle is interpolated, not snapped.** Received positions land in `opponentPaddleTargetY`; each frame `smoothOpponentPaddle(dt)` lerps `opponentPaddleY` toward it (`PADDLE_LERP_RATE`, dt-scaled). Assigning the raw received value made the paddle jump between 20 fps updates.
 
 - **Scoring.** The ball state includes `p1Score` and `p2Score`. P1 updates scores locally on goals; P2 receives them via each ball broadcast. Both clients display `P1 - P2` (P1 on the left, P2 on the right). First to 7 (`SCORE_LIMIT`) ends the match.
 

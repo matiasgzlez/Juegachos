@@ -10,6 +10,8 @@ export interface BallState {
   hits: number;
   p1Score: number;
   p2Score: number;
+  /** Posicion Y de la paleta de P1, adosada a la pelota para ahorrar mensajes. */
+  paddleY: number;
 }
 
 export class PongChannel {

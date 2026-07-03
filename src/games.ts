@@ -143,14 +143,17 @@ export const games: GameEntry[] = [
     accent: "#38e07b",
     category: "Reflejos",
   },
-  {
-    id: "rocket-arena",
-    title: "Rocket SpaceX",
-    description: "Fútbol de autos en 3D estilo Rocket League: 2v2 con bots, o en salas con los autos de todos en vivo.",
-    path: "/games/rocket-arena/",
-    accent: "#3ba7ff",
-    category: "Carreras",
-  },
+  // Oculto temporalmente por errores: no aparece en la landing ni en las salas
+  // (votacion / juego aleatorio). El codigo del juego sigue en el repo; para
+  // reactivarlo, descomentar esta entrada.
+  // {
+  //   id: "rocket-arena",
+  //   title: "Rocket SpaceX",
+  //   description: "Fútbol de autos en 3D estilo Rocket League: 2v2 con bots, o en salas con los autos de todos en vivo.",
+  //   path: "/games/rocket-arena/",
+  //   accent: "#3ba7ff",
+  //   category: "Carreras",
+  // },
   {
     id: "western-shoot",
     title: "Western Shoot",
