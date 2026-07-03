@@ -1,8 +1,8 @@
 /* General styling for Shell Game (El Trile) */
 :root {
-  --cup-width: 90px;
-  --cup-height: 125px;
-  --coin-size: 40px;
+  --cup-width: 100px;
+  --cup-height: 138px;
+  --coin-size: 42px;
   --bg-color: #0b0c10;
   --neon-cyan: #66fcf1;
   --neon-blue: #45f3ff;
@@ -98,143 +98,185 @@ body {
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
 }
 
-/* 2. Main Board */
+/* 2. Main Board — third-person tabletop scene */
 .board {
   flex-grow: 1;
   width: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
   position: relative;
   margin: 20px 0;
   border-radius: 24px;
-  background: radial-gradient(circle at center, rgba(102, 252, 241, 0.03) 0%, transparent 70%);
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 108%, rgba(102, 252, 241, 0.12) 0%, transparent 60%),
+    radial-gradient(circle at 50% 30%, rgba(69, 243, 255, 0.05) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(6, 10, 16, 0) 0%, rgba(6, 12, 20, 0.6) 100%);
+}
+
+/* Receding table plane the cups rest on (gives the 3rd-person depth) */
+.board::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 46px;
+  width: 128%;
+  height: 260px;
+  transform: translateX(-50%) perspective(760px) rotateX(66deg);
+  transform-origin: bottom center;
+  background:
+    radial-gradient(ellipse 60% 70% at 50% 40%, rgba(69, 243, 255, 0.14), transparent 62%),
+    repeating-linear-gradient(90deg, rgba(102, 252, 241, 0.06) 0 1px, transparent 1px 46px),
+    repeating-linear-gradient(0deg, rgba(102, 252, 241, 0.06) 0 1px, transparent 1px 46px),
+    linear-gradient(180deg, rgba(16, 26, 38, 0.7), rgba(8, 14, 22, 0.35));
+  border-top: 1px solid rgba(102, 252, 241, 0.25);
+  box-shadow: 0 0 60px rgba(69, 243, 255, 0.12) inset;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .cups-container {
-  width: 90%;
+  width: 88%;
   height: 250px;
   position: relative;
   display: flex;
   align-items: flex-end;
+  z-index: 1;
 }
 
 /* Cups Positioning and Styles */
 .cup {
+  --cup-edge: var(--neon-blue);
+  --cup-face: rgba(69, 243, 255, 0.16);
+  --cup-glow: rgba(69, 243, 255, 0.5);
   position: absolute;
   width: var(--cup-width);
   height: var(--cup-height);
-  bottom: 20px;
+  bottom: 34px;
   cursor: pointer;
   z-index: 5;
-  transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+  transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1),
               transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
               scale 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   transform-origin: bottom center;
 }
 
-.cup-body {
-  width: 100%;
-  height: 94%;
-  background: linear-gradient(180deg, rgba(69, 243, 255, 0.12) 0%, rgba(69, 243, 255, 0.02) 100%);
-  border: 2px solid var(--neon-blue);
-  border-bottom: none;
-  border-radius: 30px 30px 2px 2px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37),
-              inset 0 0 15px rgba(69, 243, 255, 0.15);
-  position: relative;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  
-  /* Natural 3D taper: upside down cup shape */
-  transform: perspective(200px) rotateX(-20deg);
-  transform-origin: bottom center;
-}
-
-.cup-rim {
+/* Elliptical contact shadow cast on the table */
+.cup::after {
+  content: '';
   position: absolute;
-  bottom: 0;
-  left: -5%;
-  width: 110%;
-  height: 12px;
-  background: linear-gradient(90deg, var(--neon-blue) 0%, var(--neon-cyan) 50%, var(--neon-blue) 100%);
-  border-radius: 6px;
-  box-shadow: 0 4px 15px rgba(69, 243, 255, 0.6);
-  z-index: 6;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
+  bottom: -6px;
+  left: 50%;
+  width: 118%;
+  height: 26px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.28) 45%, transparent 72%);
+  border-radius: 50%;
+  z-index: -1;
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
-/* Inner neon rings inside the cup for decoration */
+/* Tapered plastic-cup body: narrow closed top, wide mouth on the table */
+.cup-body {
+  position: absolute;
+  inset: 0;
+  bottom: 4px;
+  background:
+    linear-gradient(105deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.06) 38%, rgba(255, 255, 255, 0) 60%),
+    linear-gradient(180deg, color-mix(in srgb, var(--cup-edge) 55%, transparent) 0%, var(--cup-face) 30%, rgba(10, 22, 34, 0.42) 100%);
+  clip-path: polygon(22% 5%, 78% 5%, 100% 100%, 0% 100%);
+  filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 12px var(--cup-glow));
+  transition: filter 0.3s ease;
+}
+
+/* Rounded closed top of the (upside-down) cup */
 .cup-body::before {
   content: '';
   position: absolute;
-  top: 25%;
-  left: 10%;
-  right: 10%;
-  height: 2px;
-  background: var(--neon-blue);
-  opacity: 0.3;
-  box-shadow: 0 0 5px var(--neon-blue);
+  top: -5%;
+  left: 19%;
+  right: 19%;
+  height: 18%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--cup-edge) 70%, white 10%) 0%, var(--cup-face) 100%);
+  box-shadow: 0 0 10px var(--cup-glow);
 }
 
+/* Vertical gloss highlight for a glossy look */
 .cup-body::after {
   content: '';
   position: absolute;
-  top: 50%;
-  left: 15%;
-  right: 15%;
-  height: 2px;
-  background: var(--neon-blue);
-  opacity: 0.3;
-  box-shadow: 0 0 5px var(--neon-blue);
+  top: 12%;
+  bottom: 16%;
+  left: 27%;
+  width: 12%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+  filter: blur(1.5px);
+  transform: skewX(-5deg);
+}
+
+/* Mouth of the cup: bright neon ellipse with a dark opening, resting on the table */
+.cup-rim {
+  position: absolute;
+  bottom: 0;
+  left: -6%;
+  width: 112%;
+  height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(8, 18, 30, 0.92) 32%, var(--cup-edge) 74%, color-mix(in srgb, var(--cup-edge) 40%, white) 100%);
+  box-shadow: 0 0 16px var(--cup-glow), 0 6px 12px rgba(0, 0, 0, 0.5);
+  z-index: 6;
+  transition: box-shadow 0.3s ease, background 0.3s ease;
 }
 
 /* Cup states */
 .cup.lifted {
-  transform: translateY(-100px);
+  transform: translateY(-110px);
+}
+
+.cup.lifted::after {
+  opacity: 0.25;
+  transform: translateX(-50%) scale(0.85);
+}
+
+.cup.selectable:hover {
+  --cup-edge: var(--neon-cyan);
+  --cup-face: rgba(102, 252, 241, 0.22);
+  --cup-glow: rgba(102, 252, 241, 0.75);
 }
 
 .cup.selectable:hover .cup-body {
-  border-color: var(--neon-cyan);
-  box-shadow: 0 0 20px rgba(102, 252, 241, 0.4),
-              inset 0 0 25px rgba(102, 252, 241, 0.2);
+  transform: translateY(-6px);
 }
 
-.cup.selectable:hover .cup-rim {
-  background: linear-gradient(90deg, var(--neon-cyan) 0%, #ffffff 50%, var(--neon-cyan) 100%);
-  box-shadow: 0 0 20px rgba(102, 252, 241, 0.8);
-}
-
-.cup.selected .cup-body {
-  border-color: var(--neon-gold);
-  box-shadow: 0 0 25px rgba(255, 215, 0, 0.5),
-              inset 0 0 20px rgba(255, 215, 0, 0.3);
-}
-
-.cup.selected .cup-rim {
-  background: linear-gradient(90deg, var(--neon-gold) 0%, #ffffff 50%, var(--neon-gold) 100%);
-  box-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
+.cup.selected {
+  --cup-edge: var(--neon-gold);
+  --cup-face: rgba(255, 215, 0, 0.22);
+  --cup-glow: rgba(255, 215, 0, 0.75);
 }
 
 /* 3D curves transitions during swap */
 .cup.swap-front {
   transform: translateY(40px);
-  scale: 1.25;
+  scale: 1.22;
   z-index: 10;
 }
 
 .cup.swap-back {
   transform: translateY(-40px);
-  scale: 0.8;
+  scale: 0.82;
   z-index: 2;
 }
 
-/* Hologram Coin */
+/* Golden Coin */
 .coin {
   position: absolute;
   width: var(--coin-size);
   height: var(--coin-size);
-  bottom: 25px; /* Aligns with cups bottom */
+  bottom: 36px; /* Aligns with cups bottom */
   z-index: 1; /* Sits behind the cups */
   transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateX(-50%); /* Centered on slot */
@@ -248,9 +290,14 @@ body {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #fffb96 0%, var(--neon-gold) 60%, #b8860b 100%);
-  box-shadow: 0 0 15px var(--neon-gold), 
-              0 0 30px rgba(255, 215, 0, 0.3);
+  background:
+    radial-gradient(circle at 32% 28%, #fffdf0 0%, #ffe680 32%, var(--neon-gold) 62%, #b8860b 100%);
+  border: 2px solid rgba(255, 245, 180, 0.7);
+  box-shadow:
+    0 0 16px var(--neon-gold),
+    0 0 34px rgba(255, 215, 0, 0.35),
+    inset 0 -3px 6px rgba(160, 110, 0, 0.5),
+    inset 0 3px 5px rgba(255, 255, 255, 0.6);
   position: relative;
   animation: coin-spin-pulse 2s infinite linear;
 }
@@ -261,16 +308,19 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: rgba(255, 255, 255, 0.8);
-  font-family: monospace;
-  font-size: 20px;
-  font-weight: bold;
+  color: rgba(120, 80, 0, 0.85);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  font-family: 'Outfit', sans-serif;
+  font-size: 22px;
+  font-weight: 900;
 }
 
 @keyframes coin-spin-pulse {
-  0% { transform: scale(1) rotate(0deg); filter: brightness(1); }
-  50% { transform: scale(1.1) rotate(180deg); filter: brightness(1.2); }
-  100% { transform: scale(1) rotate(360deg); filter: brightness(1); }
+  0% { transform: scaleX(1) scale(1); filter: brightness(1); }
+  25% { transform: scaleX(0.25); filter: brightness(1.3); }
+  50% { transform: scaleX(1) scale(1.08); filter: brightness(1.15); }
+  75% { transform: scaleX(0.25); filter: brightness(1.3); }
+  100% { transform: scaleX(1) scale(1); filter: brightness(1); }
 }
 
 /* Player indicators (under cups when choice is revealed) */
@@ -310,26 +360,16 @@ body {
 }
 
 /* Correct/Incorrect cup highlights */
-.cup.correct-reveal .cup-body {
-  border-color: #39ff14;
-  box-shadow: 0 0 25px rgba(57, 255, 20, 0.4),
-              inset 0 0 15px rgba(57, 255, 20, 0.2);
+.cup.correct-reveal {
+  --cup-edge: #39ff14;
+  --cup-face: rgba(57, 255, 20, 0.24);
+  --cup-glow: rgba(57, 255, 20, 0.8);
 }
 
-.cup.correct-reveal .cup-rim {
-  background: linear-gradient(90deg, #39ff14 0%, #ffffff 50%, #39ff14 100%);
-  box-shadow: 0 0 25px rgba(57, 255, 20, 0.9);
-}
-
-.cup.incorrect-reveal .cup-body {
-  border-color: #ff3f81;
-  box-shadow: 0 0 25px rgba(255, 63, 129, 0.4),
-              inset 0 0 15px rgba(255, 63, 129, 0.2);
-}
-
-.cup.incorrect-reveal .cup-rim {
-  background: linear-gradient(90deg, #ff3f81 0%, #ffffff 50%, #ff3f81 100%);
-  box-shadow: 0 0 25px rgba(255, 63, 129, 0.9);
+.cup.incorrect-reveal {
+  --cup-edge: #ff3f81;
+  --cup-face: rgba(255, 63, 129, 0.24);
+  --cup-glow: rgba(255, 63, 129, 0.8);
 }
 
 /* 3. Screen Overlays */

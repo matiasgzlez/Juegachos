@@ -239,6 +239,12 @@ export class Game {
       this.ball.update(dt);
       this.checkCollisionsRoom();
 
+      if (this.state === "dead") {
+        // Match ended on this frame: push the final score so P2 also ends.
+        this.broadcastBall();
+        return;
+      }
+
       this.broadcastTimer += dt;
       if (this.broadcastTimer >= BROADCAST_INTERVAL) {
         this.broadcastTimer = 0;
