@@ -10,6 +10,10 @@ The frog is always logically inside its own lane row (`frog.gridY` picks the lan
 
 If tuning fairness: raise `FROG_HITBOX_HALF` (constants.ts) to make cars deadlier, lower it to be more forgiving; `VISUAL_INSET` (Obstacle.ts) must track how far obstacle bodies are drawn inside their cell.
 
+## Spawn de obstaculos (lanes)
+
+`createLane` fija `spacing = ancho + hueco` para cada lane (autos: hueco 110-200px; troncos/tortugas: hueco 40-70px ~ 1 celda), asi los obstaculos **nunca se solapan** y los huecos de agua son visibles y consistentes (antes el `spacing` era aleatorio e independiente del ancho, los nenufares/troncos se apilaban y el jugador saltaba a lo que parecia plataforma y caia al agua). `populateLane` los reparte parejos sobre un anillo de largo `wrapWidth = count * spacing`; cada `Obstacle` guarda ese `wrapWidth` y hace wrap modulo sobre el anillo, por lo que conservan el espaciado para siempre (sin acumularse) y ambos bordes del wrap quedan fuera de pantalla (sin pop-in). Para cambiar la dificultad del rio, ajustar el hueco en la rama `river` de `createLane`: menos hueco = plataformas mas faciles de pisar.
+
 ## Rendering
 
 `game/Renderer.ts` is 2D canvas, neon-on-dark. Lanes: grass (two-tone turf + stable scattered tufts / pebbles / glowing flowers), road (asphalt gradient + dashed yellow centre line, dash offset per row), river (deep-water gradient + two layered animated ripples). Obstacles: cars (body + darkened cabin/windshield, gloss strip, wheels, leading headlights), logs (bark gradient + end-grain rings + grain line), turtles (segmented shell + head poking in the travel direction). The frog has a hop arc, a ground shadow that shrinks mid-hop, and a belly highlight. Per-row decorations are seeded by `rowRandom(row, salt)` so they stay put instead of flickering each frame.
