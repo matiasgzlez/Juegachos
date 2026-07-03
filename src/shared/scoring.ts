@@ -80,6 +80,7 @@ export const GAME_SCORING: Record<string, GameScoring> = {
     format: (n) => `Nivel ${n}`,
   },
   "pong": { direction: "higher" },
+  "block-paddle": { direction: "higher" },
 };
 
 /**
