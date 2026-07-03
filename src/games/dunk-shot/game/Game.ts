@@ -98,6 +98,14 @@ export class Game {
     container.append(this.canvas);
     this.ctx = this.canvas.getContext("2d")!;
 
+    this.stars = Array.from({ length: 70 }, () => ({
+      x: Math.random() * VIEW_WIDTH,
+      y: Math.random() * VIEW_HEIGHT,
+      r: 0.6 + Math.random() * 1.6,
+      parallax: 0.15 + Math.random() * 0.35,
+      alpha: 0.25 + Math.random() * 0.55,
+    }));
+
     this.hud = new Hud(container, () => this.onPrimary());
     this.hud.setBest(this.best);
     this.hud.showStart();
@@ -195,8 +203,13 @@ export class Game {
     this.perfectStreak = 0;
     this.floaters = [];
     this.aimStart = this.aimNow = null;
+    this.baskets = 0;
+    this.moveTime = 0;
+    this.ballSpin = 0;
+    this.trail = [];
 
-    this.current = { x: VIEW_WIDTH * 0.3, y: 0 };
+    const startX = VIEW_WIDTH * 0.3;
+    this.current = { x: startX, y: 0, ...STATIC_HOOP, baseX: startX };
     this.target = this.spawnTarget(this.current);
     this.restBall();
     this.cameraY = this.current.y - CAMERA_HOOP_VIEW_Y;
@@ -217,16 +230,37 @@ export class Game {
     this.ballX = this.current.x;
     this.ballY = this.current.y + 8;
     this.velX = this.velY = 0;
+    this.trail = [];
   }
 
-  /** New target on the opposite half of the screen, somewhat higher up. */
+  /**
+   * New target on the opposite half of the screen, somewhat higher up. From
+   * HOOP_MOVE_START baskets on it oscillates horizontally, ramping amplitude
+   * and speed over the next HOOP_MOVE_RAMP baskets.
+   */
   private spawnTarget(from: Hoop): Hoop {
-    const onLeft = from.x < VIEW_WIDTH / 2;
+    const onLeft = from.baseX < VIEW_WIDTH / 2;
     const min = onLeft ? VIEW_WIDTH / 2 + 30 : HOOP_MARGIN_X;
     const max = onLeft ? VIEW_WIDTH - HOOP_MARGIN_X : VIEW_WIDTH / 2 - 30;
+    const baseX = min + Math.random() * (max - min);
+
+    let amp = 0;
+    let speed = 0;
+    if (this.baskets >= HOOP_MOVE_START) {
+      const t = Math.min(1, (this.baskets - HOOP_MOVE_START) / HOOP_MOVE_RAMP);
+      amp = HOOP_MOVE_AMP_MIN + t * (HOOP_MOVE_AMP_MAX - HOOP_MOVE_AMP_MIN);
+      speed = HOOP_MOVE_SPEED_MIN + t * (HOOP_MOVE_SPEED_MAX - HOOP_MOVE_SPEED_MIN);
+      // Keep the whole swing (rim included) inside the walls.
+      amp = Math.max(0, Math.min(amp, baseX - RIM_RADIUS - 8, VIEW_WIDTH - RIM_RADIUS - 8 - baseX));
+    }
+
     return {
-      x: min + Math.random() * (max - min),
+      x: baseX,
       y: from.y - (HOOP_MIN_RISE + Math.random() * (HOOP_MAX_RISE - HOOP_MIN_RISE)),
+      baseX,
+      amp,
+      speed,
+      phase: Math.random() * Math.PI * 2,
     };
   }
 
@@ -263,7 +297,23 @@ export class Game {
     const camTarget = this.current.y - CAMERA_HOOP_VIEW_Y;
     this.cameraY += (camTarget - this.cameraY) * Math.min(1, dt * CAMERA_EASE);
 
-    if (this.state !== "playing" || this.ballState !== "flight") return;
+    if (this.state !== "playing") return;
+
+    // Moving hoops oscillate around baseX (amp = 0 keeps them static).
+    this.moveTime += dt;
+    for (const hoop of [this.current, this.target]) {
+      if (hoop.amp > 0) hoop.x = hoop.baseX + Math.sin(this.moveTime * hoop.speed + hoop.phase) * hoop.amp;
+    }
+
+    if (this.ballState !== "flight") {
+      // The resting ball rides its (possibly moving) hoop.
+      this.ballX = this.current.x;
+      return;
+    }
+
+    this.ballSpin += this.velX * dt * 0.02;
+    this.trail.push({ x: this.ballX, y: this.ballY });
+    if (this.trail.length > TRAIL_MAX) this.trail.shift();
 
     let remaining = dt;
     while (remaining > 0 && this.ballState === "flight") {
@@ -361,6 +411,7 @@ export class Game {
 
     this.score += points;
     this.hud.setScore(this.score);
+    this.baskets++;
 
     this.current = this.target;
     this.target = this.spawnTarget(this.current);
@@ -390,6 +441,18 @@ export class Game {
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
 
+    // Stars in screen space with per-star parallax (wrap vertically forever).
+    ctx.save();
+    ctx.fillStyle = "#dfe7ff";
+    for (const s of this.stars) {
+      const sy = ((s.y - this.cameraY * s.parallax) % VIEW_HEIGHT + VIEW_HEIGHT) % VIEW_HEIGHT;
+      ctx.globalAlpha = s.alpha;
+      ctx.beginPath();
+      ctx.arc(s.x, sy, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
     if (this.state === "ready") return;
 
     ctx.save();
@@ -398,6 +461,7 @@ export class Game {
     drawHoopBack(ctx, this.target);
     drawHoopBack(ctx, this.current);
 
+    this.drawTrail(ctx);
     this.drawAimPreview(ctx);
     this.drawBall(ctx);
 
@@ -419,6 +483,21 @@ export class Game {
     ctx.restore();
   }
 
+  /** Fading ghost circles along the recent flight path, drawn under the ball. */
+  private drawTrail(ctx: CanvasRenderingContext2D): void {
+    if (this.ballState !== "flight" || this.trail.length === 0) return;
+    ctx.save();
+    for (let i = 0; i < this.trail.length; i++) {
+      const t = (i + 1) / this.trail.length;
+      ctx.globalAlpha = t * 0.22;
+      ctx.fillStyle = "#ffab5e";
+      ctx.beginPath();
+      ctx.arc(this.trail[i].x, this.trail[i].y, BALL_RADIUS * (0.4 + t * 0.5), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
   private drawBall(ctx: CanvasRenderingContext2D): void {
     ctx.save();
     const grad = ctx.createRadialGradient(
@@ -436,15 +515,17 @@ export class Game {
     ctx.arc(this.ballX, this.ballY, BALL_RADIUS, 0, Math.PI * 2);
     ctx.fill();
 
-    // Basketball seams.
+    // Basketball seams, rotated by the flight spin.
+    ctx.translate(this.ballX, this.ballY);
+    ctx.rotate(this.ballSpin);
     ctx.strokeStyle = "rgba(60, 20, 5, 0.55)";
     ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.arc(this.ballX, this.ballY, BALL_RADIUS, 0, Math.PI * 2);
-    ctx.moveTo(this.ballX - BALL_RADIUS, this.ballY);
-    ctx.lineTo(this.ballX + BALL_RADIUS, this.ballY);
-    ctx.moveTo(this.ballX, this.ballY - BALL_RADIUS);
-    ctx.lineTo(this.ballX, this.ballY + BALL_RADIUS);
+    ctx.arc(0, 0, BALL_RADIUS, 0, Math.PI * 2);
+    ctx.moveTo(-BALL_RADIUS, 0);
+    ctx.lineTo(BALL_RADIUS, 0);
+    ctx.moveTo(0, -BALL_RADIUS);
+    ctx.lineTo(0, BALL_RADIUS);
     ctx.stroke();
     ctx.restore();
   }
