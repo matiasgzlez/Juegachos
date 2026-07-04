@@ -140,12 +140,12 @@ export class Space {
 
   /** A huge close Saturn (partly in frame) with banded rings + a distant moon. */
   private buildVista(): void {
-    const R = 52;
+    const R = 200;
     const saturn = new THREE.Group();
-    // Up in the top-right, close and large, so only the lower-left limb shows.
-    saturn.position.set(58, 44, -120);
-    // Tilt the whole system so the rings sweep down toward the lower-left.
-    saturn.rotation.set(-1.18, 0.15, 0.62);
+    // Position Saturn closer and further to the right/top so only the left limb is visible
+    saturn.position.set(220, -130, -100);
+    // Adjust rotation so the rings sweep diagonally across the screen
+    saturn.rotation.set(2.15, -0.3, 0);
 
     // --- Globe: lit banded sphere (directional light gives the terminator). ---
     const globeMat = new THREE.MeshStandardMaterial({
@@ -176,8 +176,8 @@ export class Space {
     // Rings depth-test against the opaque globe, so the far arc is hidden behind
     // the planet — the natural "shadow"/occlusion of the reference photo. ---
     const RING_COUNT = 22;
-    const inner = R * 1.22;
-    const outer = R * 2.35;
+    const inner = R * 1.8;
+    const outer = R * 3;
     const dark = new THREE.Color(0x6f5a3a);
     const mid = new THREE.Color(0xbda274);
     const light = new THREE.Color(0xe6d6b0);
