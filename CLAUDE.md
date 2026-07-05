@@ -89,6 +89,22 @@ Setup note: the rooms schema (including `room_match_state`) is `supabase/rooms.s
 
 Degradation matches the leaderboard: without credentials the landing button and `/rooms/` UI don't function and every game behaves exactly as before.
 
+## Anuncios (Google AdSense)
+
+Advertising via Google AdSense. Lives in `src/shared/ads/` (cross-cutting infra, not gameplay):
+
+- `client.ts` — the AdSense publisher id (`ADSENSE_CLIENT = "ca-pub-…"`). It's a **public** value (it ends up in every page's HTML), so it's a committed constant, not a secret env var. No imports, so both the runtime (`ads.ts`) and the build (`vite.config.ts`) can read it.
+- `ads.ts` — the core. Reads `ADSENSE_CLIENT` (overridable by env `VITE_ADSENSE_CLIENT`) and `VITE_ADS_PLACEHOLDER` (`"1"` to preview the ad spaces with a dashed placeholder in dev). Exposes `isAdsEnabled()`, `adsActive()`, the `AD_SLOTS` map, and `createAdSlot(opts)`. `createAdSlot` returns a real `<ins class="adsbygoogle">` (and `push({})`es it) when there's a client **and** a slot id; a placeholder box under `VITE_ADS_PLACEHOLDER`; otherwise **`null`** (callers just don't insert it — no empty gap). It injects its own CSS once (same self-contained pattern as `RoomOverlay`), so games stay decoupled. It does **not** load the AdSense loader script — that's done site-wide by the Vite plugin (below).
+- `AD_SLOTS` in `ads.ts` — the per-placement `data-ad-slot` ids (`landingBanner`, `gameRailLeft`, `gameRailRight`), **empty by default**. Until you create the ad units in AdSense and paste their slot ids here, those manual placements render nothing (Auto ads still run off the site-wide loader). Slot ids aren't secret, so they're constants.
+- `gameRails.ts` — a self-mounting side-effect module that appends two fixed vertical rails (`.ad-rail--left/right`) beside the play area. It only mounts on games in its `RAIL_GAMES` allowlist — DOM-board games with real side gutters (`tic-tac-toe`, `connect-four`, `simon`, `lights-out`, `memory-match`, `sliding-puzzle`, `whack-a-mole`, `shell-game`, `tower-of-hanoi`, `odd-one-out`). Full-bleed canvas games (all the 3D/arcade ones, plus 2D full-window ones like `snake`) are **excluded** — a fixed rail would cover their play area. The injected CSS hides the rails below 1300px so they never appear on mobile/narrow screens or overlap the board. Extending the set is a one-line edit to `RAIL_GAMES`.
+
+Wiring (Vite plugin `injectGameAds` in `vite.config.ts`, `transformIndexHtml` with `order:"pre"`):
+- **AdSense loader** (`<script async src="…adsbygoogle.js?client=…" crossorigin>`) is injected into the `<head>` of **every** page (landing, games, rooms) — but only in **build**, not dev (so localhost doesn't hit Google). This is what verifies the site and powers Auto ads.
+- **Rails**: an inline `import "/src/shared/ads/gameRails.ts"` is injected into every `games/*/index.html` (not landing/rooms) with **zero per-game edits**; it's inline (not an external `src`, which ended up an inert `modulepreload`) so it actually executes. Future games are covered automatically; the allowlist gates whether rails mount. **No `Game.ts`/`Hud.ts` is touched.**
+- **Landing** (`src/main.ts`): a horizontal `createAdSlot` banner (`.ad-banner`, styled in `src/style.css`) is appended between the grid and the footer, only if non-null.
+
+To go fully live: verify the site in the AdSense dashboard and enable Auto ads (the loader is already present); for the manual banner/rails, create ad units and paste their slot ids into `AD_SLOTS`. With `VITE_ADS_PLACEHOLDER=1 npm run dev` you can preview the placements locally without hitting Google.
+
 ## Shared UX pattern: Enter-to-start countdown
 
 Every game starts the same way: from the start / game-over screen, Enter (or a tap) enters a `countdown` state that shows 3 / 2 / 1 / YA before play begins, then the run starts. The pattern is duplicated per game (not shared code, per the decoupling rule): each `Game.ts` has a `countdown` state plus `COUNTDOWN_LABELS` / `COUNTDOWN_STEP` constants and a `beginCountdown()`; each `Hud` has `showCountdown(text | null)`; each `style.css` has the `.countdown` label styling and `countdown-pop` keyframes. This is mandatory — every game must implement this pattern (see the Conventions rule above); new games are not complete without it.
