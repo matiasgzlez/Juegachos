@@ -61,7 +61,10 @@ export class Tree {
   private dropOffset = 0;
   private readonly flying: FlyingLog[] = [];
   private readonly flyingLeaves: FlyingLeaf[] = [];
-  private recentSides: Side[] = [];
+  /** Branch of the last segment generated (the one directly below the next). */
+  private lastBranch: Branch = "none";
+  /** Length of the current same-side branch run, to force periodic gaps. */
+  private sameSideRun = 0;
 
   constructor() {
     for (let i = 0; i < VISIBLE_SEGMENTS; i++) {
@@ -73,7 +76,8 @@ export class Tree {
   }
 
   reset(): void {
-    this.recentSides = [];
+    this.lastBranch = "none";
+    this.sameSideRun = 0;
     this.dropOffset = 0;
     this.segments.forEach((seg, i) => {
       const branch = i < SAFE_START_SEGMENTS ? "none" : this.rollBranch();
@@ -155,17 +159,20 @@ export class Tree {
   }
 
   private rollBranch(): Branch {
-    if (Math.random() >= BRANCH_CHANCE) {
-      this.recentSides = [];
+    // Force a branch-free log once a same-side run gets long: it gives the player a
+    // spot to switch sides and keeps same-side walls from feeling unfair.
+    if (this.sameSideRun >= MAX_SAME_SIDE_RUN || Math.random() >= BRANCH_CHANCE) {
+      this.lastBranch = "none";
+      this.sameSideRun = 0;
       return "none";
     }
-    let side: Side = Math.random() < 0.5 ? "left" : "right";
-    const run = this.recentSides;
-    if (run.length >= MAX_SAME_SIDE_RUN && run.every((s) => s === side)) {
-      side = side === "left" ? "right" : "left";
-    }
-    if (run.length && run[run.length - 1] === side) run.push(side);
-    else this.recentSides = [side];
+    // Never place a branch on the opposite side of the log directly below. To change
+    // sides the player needs a branch-free gap, so a switch always lands on a clear
+    // spot instead of chopping straight into a branch. If the log below has a branch,
+    // stay on its side; otherwise pick freely.
+    const side: Side = this.lastBranch !== "none" ? this.lastBranch : Math.random() < 0.5 ? "left" : "right";
+    this.sameSideRun = this.lastBranch === side ? this.sameSideRun + 1 : 1;
+    this.lastBranch = side;
     return side;
   }
 

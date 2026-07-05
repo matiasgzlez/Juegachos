@@ -40,11 +40,15 @@ discrete chop toward that side.
 
 ## Non-obvious gotchas
 
-**Chop / death ordering:** in `Game.processInput` the death check is `tree.bottomBranch === side`
-**before** calling `tree.chop(side)`. `bottomBranch` is the branch on the log currently at the
-lumberjack's height; `chop()` then removes that log and shifts the stack. Reversing the order
-would test the wrong segment. The input queue is drained fully each frame (fast tapping is
-responsive), but the loop `return`s the moment a chop is fatal.
+**Chop / death ordering:** in `Game.processInput` the death check runs **after** `tree.chop(side)`,
+not before. A chop drops the whole trunk one segment so a new log settles beside the lumberjack;
+`tree.bottomBranch` then reads that freshly-settled log, and if it carries a branch on the side the
+lumberjack chopped from, the branch goes through him and he dies (matching real Timberman — you die
+from the incoming log, not the one you just chopped away). Checking `bottomBranch` **before** the
+shift was the original bug: it tested the log that is about to fly off instead of the one that lands
+next to the player. The input queue is drained fully each frame (fast tapping is responsive), but
+the loop `return`s the moment a chop is fatal. `SAFE_START_SEGMENTS` guarantees the first couple of
+post-shift logs are branch-free so the opening chops can't kill.
 
 **Segment recycling:** `Tree.chop()` reuses the shifted-off bottom `THREE.Group` as the new
 top segment (re-skinned by `applySegment`) instead of allocating — the visible count stays
@@ -54,10 +58,14 @@ rebuilds only the branch children.
 **Lumberjack mirroring:** `setSide` sets `group.scale.x = -dir` so the same model faces the
 trunk from either side. Don't add left/right-specific meshes expecting a fixed orientation.
 
-**Branch generation fairness:** every segment carries at most one branch (never both sides, so
-there is no unavoidable death), and `MAX_SAME_SIDE_RUN` caps consecutive same-side branches.
-The bottom `SAFE_START_SEGMENTS` are branch-free on reset so you are never killed on the first
-chop.
+**Branch generation fairness (`Tree.rollBranch`):** every segment carries at most one branch
+(never both sides, so there is no unavoidable death). The key rule: **no two adjacent logs ever
+carry branches on opposite sides** — to change sides the player needs a branch-free gap, so a
+forced side switch always lands on a clear spot instead of chopping straight into a branch on the
+log below. `rollBranch` enforces this by staying on `lastBranch`'s side while a run continues and
+only picking a fresh side after a `none` gap; `MAX_SAME_SIDE_RUN` forces such a gap once a
+same-side run gets long. The bottom `SAFE_START_SEGMENTS` are branch-free on reset so the opening
+chops can't kill.
 
 **Enter-to-start countdown:** mandatory shared pattern. From start/game-over, Enter/Space
 (wired in `Hud`) or a tap enters the `countdown` state showing 3 / 2 / 1 / YA

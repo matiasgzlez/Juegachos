@@ -186,12 +186,13 @@ export class Game {
     while (side) {
       this.lumberjack.chop(side);
       SoundEffects.playChop();
-      // The log at the lumberjack's height carries a branch on his side: hit.
+      // Chop the bottom log: the tree drops one and a new log settles beside the
+      // lumberjack. If that log has a branch on his side, it goes through him: hit.
+      this.tree.chop(side);
       if (this.tree.bottomBranch === side) {
         this.endGame();
         return;
       }
-      this.tree.chop(side);
       this.score++;
       this.timer = Math.min(TIMER_MAX, this.timer + TIMER_GAIN);
       this.shake = CAMERA_SHAKE;
