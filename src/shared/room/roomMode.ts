@@ -574,13 +574,35 @@ class RoomModeController implements RoomMode {
   private renderWaiting(): void {
     const state = this.state;
     const present = this.channel?.presentPlayers() ?? [];
-    const done = new Set(state ? this.roundScores().map((s) => s.player) : [this.me]);
+    const roundScores = state ? this.roundScores() : [];
+    const scoreOf = new Map(roundScores.map((s) => [s.player, s]));
     const players = state?.players ?? [this.me];
 
-    const entries: WaitingEntry[] = players.map((player) => ({
-      player,
-      state: done.has(player) ? "done" : present.includes(player) ? "playing" : "offline",
-    }));
+    // Orden tipo tabla en vivo: los que ya terminaron primero, por puntaje.
+    const ranked = rankRound(this.gameId, players, roundScores);
+    const rankOf = new Map(ranked.map((r, i) => [r.player, i]));
+
+    const entries: WaitingEntry[] = players.map((player) => {
+      const s = scoreOf.get(player);
+      if (s) {
+        return {
+          player,
+          state: "done",
+          scoreText: formatScore(this.gameId, s.score) + (s.finished ? "" : " parcial"),
+        };
+      }
+      return { player, state: present.includes(player) ? "playing" : "offline" };
+    });
+
+    const groupOf = (e: WaitingEntry): number =>
+      e.state === "done" ? 0 : e.state === "playing" ? 1 : 2;
+    entries.sort(
+      (a, b) =>
+        groupOf(a) - groupOf(b) ||
+        (rankOf.get(a.player) ?? 999) - (rankOf.get(b.player) ?? 999) ||
+        (a.player < b.player ? -1 : 1),
+    );
+
     this.overlay.showWaiting(entries, this.me);
   }
 
