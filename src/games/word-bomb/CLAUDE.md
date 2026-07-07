@@ -49,9 +49,12 @@ descubrirlo) y en el picker/votacion de salas como cualquier otro juego de sala.
   al jugador de turno; su nombre se pone **verde**. **No hay caja de texto**: un
   `<input>` invisible (opacity 0, cubre la arena) captura el tecleo y summonea el
   teclado en movil, y el texto se refleja bajo el avatar propio; el tipeo ajeno
-  llega por el relay `wb:typing` y se muestra bajo el avatar del rival de turno. La
-  ultima palabra aceptada de cada jugador queda bajo su avatar (`lastWords` en
-  `Game.ts`). La mecha (fuse) se anima bajo la bomba. Los estados de
+  llega por el relay `wb:typing` y se muestra bajo el avatar del rival de turno
+  (el **eco del tipeo propio se ignora** en `Game.ts` — llega con lag y pisaria lo
+  recien escrito, causando parpadeo). La ultima palabra aceptada de cada jugador
+  queda bajo su avatar (`lastWords` en `Game.ts`). **No hay mecha/timer visible a
+  proposito** (da suspenso): el server tiene el `deadline` real y hace explotar la
+  bomba; el cliente solo se entera cuando alguien pierde una vida. Los estados de
   espera/resultados/tablero final los cubre el `RoomOverlay` compartido por encima.
 - `game/WordBombTransport.ts` — interfaz de transporte + tipos que **espejan**
   `server/src/protocol.ts` (no se comparte modulo entre `src/` y `server/` por la

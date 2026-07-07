@@ -1,5 +1,3 @@
-import { FUSE_DANGER_FRACTION } from "./constants";
-
 export interface HudPlayer {
   nickname: string;
   lives: number;
@@ -42,7 +40,6 @@ export class Hud {
   private readonly stage: HTMLDivElement;
   private readonly arena: HTMLDivElement;
   private readonly bombFragEl: HTMLDivElement;
-  private readonly fuseFill: HTMLDivElement;
   private readonly pointer: HTMLDivElement;
   private readonly input: HTMLInputElement;
   private readonly overlay: HTMLDivElement;
@@ -54,7 +51,6 @@ export class Hud {
   private cardEls = new Map<string, HTMLDivElement>();
   private me = "";
 
-  private fuseRaf = 0;
   private submitCb: (word: string) => void = () => {};
   private typeCb: (text: string) => void = () => {};
 
@@ -67,7 +63,6 @@ export class Hud {
         <div class="wb__arena">
           <div class="wb__bomb">
             <div class="wb__bomb-frag"></div>
-            <div class="wb__fuse"><div class="wb__fuse-fill"></div></div>
           </div>
           <div class="wb__pointer" hidden></div>
         </div>
@@ -83,7 +78,6 @@ export class Hud {
     this.stage = wrap.querySelector(".wb__stage")!;
     this.arena = wrap.querySelector(".wb__arena")!;
     this.bombFragEl = wrap.querySelector(".wb__bomb-frag")!;
-    this.fuseFill = wrap.querySelector(".wb__fuse-fill")!;
     this.pointer = wrap.querySelector(".wb__pointer")!;
     this.input = wrap.querySelector(".wb__input")!;
     this.overlay = wrap.querySelector(".wb__overlay")!;
@@ -273,26 +267,6 @@ export class Hud {
     el.classList.remove("is-reject");
     el.classList.add("is-accept");
     window.setTimeout(() => el.classList.remove("is-accept"), 700);
-  }
-
-  // ---------- Mecha ----------
-
-  /** Anima la mecha (fuse) hasta `deadline` (epoch ms), sabiendo su `total`. */
-  startFuse(deadline: number, total: number): void {
-    this.stopFuse();
-    const tick = () => {
-      const remaining = deadline - Date.now();
-      const frac = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
-      this.fuseFill.style.transform = `scaleX(${frac})`;
-      this.fuseFill.classList.toggle("is-danger", frac <= FUSE_DANGER_FRACTION);
-      if (remaining > 0) this.fuseRaf = requestAnimationFrame(tick);
-    };
-    tick();
-  }
-
-  stopFuse(): void {
-    if (this.fuseRaf) cancelAnimationFrame(this.fuseRaf);
-    this.fuseRaf = 0;
   }
 }
 

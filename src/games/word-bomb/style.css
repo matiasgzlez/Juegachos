@@ -131,26 +131,6 @@ body {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
-.wb__fuse {
-  position: absolute;
-  bottom: -16px;
-  width: 72%;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.4);
-  overflow: hidden;
-}
-.wb__fuse-fill {
-  height: 100%;
-  width: 100%;
-  transform-origin: left center;
-  background: var(--spark);
-  transform: scaleX(1);
-}
-.wb__fuse-fill.is-danger {
-  background: var(--danger);
-}
-
 /* Flecha/chispa que apunta al jugador de turno (gira segun el angulo). */
 .wb__pointer {
   position: absolute;

@@ -42,7 +42,7 @@ vistazo, sepas **de quien es el turno y que esta escribiendo**.
 - **Vidas** corazones rojos `#ff5a5f`; **eliminado** calavera y nombre tachado,
   atenuado. **Desconectado** en cursiva/gris (sigue en la ronda, la mecha lo
   castiga como AFK).
-- **Peligro de mecha** `#e23b3b` — la mecha/fuse vira a rojo en el ultimo tramo.
+- **Rojo peligro** `#e23b3b` — la palabra rechazada y el golpe de la explosion.
 
 ## Vocabulario visual
 
@@ -52,8 +52,9 @@ vistazo, sepas **de quien es el turno y que esta escribiendo**.
 - **Corazones y calavera** como marcas claras y legibles arriba del avatar, no
   ilustraciones recargadas.
 - **La bomba** es un disco simple con el fragmento; la tension la pone la
-  **flecha que apunta** y el **fuse** que se consume, no una ilustracion de
-  dinamita.
+  **flecha que apunta** al jugador de turno, no una ilustracion de dinamita.
+  **No se muestra cuanto tiempo queda** (a proposito, da suspenso): la bomba
+  puede explotar en cualquier momento; el server tiene el deadline real.
 - **Texto en vivo** debajo del avatar: lo que se teclea se ve al instante (propio
   y ajeno, via el relay del server). La ultima palabra aceptada queda debajo del
   avatar hasta el proximo turno de ese jugador.

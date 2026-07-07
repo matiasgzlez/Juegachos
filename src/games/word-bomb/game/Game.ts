@@ -33,8 +33,6 @@ export class Game {
   private latest: WbState | null = null;
   private prev: WbState | null = null;
   private lastAcceptSeq = 0;
-  private fuseTotal = 0;
-  private fuseKey = "";
   /** Ultima palabra aceptada por cada jugador (se muestra bajo su avatar). */
   private readonly lastWords = new Map<string, string>();
 
@@ -124,7 +122,11 @@ export class Game {
     transport.onState((s) => this.onState(s));
     transport.onInvalid((r) => this.onInvalid(r));
     transport.onTyping((player, text) => {
-      if (this.state === "playing") this.hud.showTyping(player, text);
+      // El propio tipeo ya se muestra local al instante; ignorar su eco del
+      // server (llega con lag y pisaria lo recien escrito -> parpadeo).
+      if (this.state === "playing" && player !== this.room?.me) {
+        this.hud.showTyping(player, text);
+      }
     });
     transport.onGameover((r) => this.onGameover(r));
     this.transport = transport;
@@ -159,13 +161,9 @@ export class Game {
       usedCount: s.usedCount,
     });
 
-    // Mecha: reinicia solo cuando cambia el turno/fragmento (no en cada snapshot).
-    const key = `${turnPlayer}|${s.fragment}|${s.deadline}`;
-    if (s.phase === "playing" && s.deadline && key !== this.fuseKey) {
-      this.fuseKey = key;
-      this.fuseTotal = Math.max(1, s.deadline - Date.now());
-      this.hud.startFuse(s.deadline, this.fuseTotal);
-    }
+    // Sin mecha visible a proposito: el jugador no ve cuanto tiempo le queda (da
+    // suspenso). El server sigue teniendo el deadline real y hace explotar la
+    // bomba; el cliente solo se entera cuando alguien pierde una vida.
 
     this.prev = s;
   }
@@ -206,7 +204,6 @@ export class Game {
   private onGameover(result: WbGameover): void {
     if (this.state === "over") return;
     this.state = "over";
-    this.hud.stopFuse();
     this.hud.setInputEnabled(false);
 
     const me = this.room?.me ?? "";
