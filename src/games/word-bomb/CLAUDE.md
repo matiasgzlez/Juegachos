@@ -43,9 +43,12 @@ descubrirlo) y en el picker/votacion de salas como cualquier otro juego de sala.
 - `game/Hud.ts` — DOM "fiesta de la bomba" (ver DESIGN.md): los jugadores forman un
   **circulo** alrededor de la **bomba central** (repartidos por angulo, `i*360/n`
   desde arriba, soporta 2-8 jugadores). Cada jugador es una columna: **nombre
-  arriba**, **avatar generico** (silueta violeta SVG sobre placa gris, igual para
-  todos — nunca imagenes propias) con corazones/calavera encima, y **debajo lo que
-  escribe**. La **bomba** es cartoon: esfera con brillo (`.wb__bomb`), **collar
+  arriba**, **personaje** (bocha violeta `CHARACTER_SVG` con **cara reactiva**: todas
+  las variantes de ojos/cejas/boca/sudor viven en el SVG y el CSS muestra la que toca
+  segun las clases de la tarjeta —`is-turn` concentrado, `is-out` muerto con ojos en
+  X, `is-happy` feliz al acertar— y el `is-critical` del stage —panico con sudor y
+  globo "RAPIDO!"—; `stage.is-critical` lo togglea `tickFuse`). Corazones/calavera van
+  **dibujados** (`HEART_SVG`/`SKULL_SVG`, nada de emojis), y **debajo lo que escribe**. La **bomba** es cartoon: esfera con brillo (`.wb__bomb`), **collar
   metalico** (`.wb__collar`), **mecha trenzada con chispa** que titila
   (`.wb__wick`/`.wb__spark`), apoyada en un **socket de luz ambar** (`.wb__socket`);
   el fragmento va en **tiza** blanca. De fondo suben **brasas** (`.wb__embers`,

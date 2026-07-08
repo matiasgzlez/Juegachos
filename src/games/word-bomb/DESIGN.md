@@ -29,9 +29,12 @@ turno** y **que esta escribiendo**.
   juego (ver el `CLAUDE.md`), visible para todos en todos los turnos.
 - **Una flecha/chispa** ambar sale de la bomba y **gira** apuntando al jugador de
   turno.
-- **Cada jugador** es una columna: **nombre arriba**, **avatar** (bocha violeta
-  generica — nunca fotos ni imagenes propias), y **debajo lo que escribe**. Encima
-  del avatar, su estado: corazones (vidas) o calavera si quedo afuera.
+- **Cada jugador** es una columna: **nombre arriba**, **personaje** (bocha violeta
+  generica con **cara que reacciona al estado** — nunca fotos ni imagenes propias),
+  y **debajo lo que escribe**. Encima, su estado: corazones (vidas) o calavera si
+  quedo afuera. Las caras: **neutral** (calma), **concentrado** en su turno,
+  **panico** con gota de sudor y globo "RAPIDO!" cuando aprieta el tiempo, **feliz**
+  al acertar, y **muerto** (ojos en X) al quedar eliminado.
 - **Sin caja de texto.** El de turno escribe y el texto aparece bajo su avatar (un
   input invisible summonea el teclado en movil).
 - **Ambiente:** fondo noche calido, **resplandor ambar** detras de la bomba,
@@ -46,7 +49,8 @@ turno** y **que esta escribiendo**.
 - **Bomba** `#141013` con highlight frio `#3a3f4a`; **collar** metal `#8a8f99` ->
   `#4a4e57`.
 - **Nombre / tiza** `#f7efe6` — blanco calido, peso alto.
-- **Personaje** silueta violeta `#7c4dcc` (mas saturado que antes) sobre placa gris.
+- **Personaje** bocha violeta `#7c4dcc` (cuerpo) con rasgos en `#241033`; gris
+  `#4a4a52` al quedar eliminado. Corazones `#ff5a5f`, gota de sudor `#8fd3ff`.
 - **Turno** `#46d16a` — el nombre del jugador de turno se pone verde.
 - **Vidas** corazones rojos `#ff5a5f`; **eliminado** calavera + nombre tachado.
   **Desconectado** en cursiva/gris (sigue en la ronda, la mecha lo castiga como AFK).
@@ -86,7 +90,8 @@ rebotes elasticos.
 ## Que evitar
 
 - Volver a la **mesa apagada y plana**: el centro tiene que respirar fuego.
-- Fotos / avatares personalizados: siempre la silueta generica violeta.
+- Fotos / avatares personalizados: siempre la bocha violeta generica (la identidad
+  la da el nombre). Lo que cambia es la **cara** segun el estado, no la persona.
 - Una caja de input visible: se escribe directo, el texto vive bajo el avatar.
 - **Emojis** en cualquier lado (regla del repo): corazones/calavera van dibujados.
 - Sobrecargar: las brasas, el resplandor y las fichas son **atmosfera** — nunca
@@ -99,8 +104,8 @@ Se hace por capas (decision del programador, incremental):
 1. **Ambiente + bomba** (esta capa): fondo caliente, resplandor, brasas, vignette,
    socket ambar, bomba cartoon con collar + mecha + chispa, fragmento en tiza,
    anillo tintado. **Sin tocar personajes.**
-2. **Personajes expresivos**: bocha violeta con **cara segun estado** (neutral /
-   sudando cuando aprieta el tiempo / calavera al quedar afuera) y globos de dialogo
-   ("RAPIDO!", "SE ACABA!") en el de turno.
+2. **Personajes expresivos** (HECHA): bocha violeta con **cara segun estado**
+   (neutral / concentrado / panico con sudor / feliz / muerto), corazones y calavera
+   dibujados (sin emojis) y globo "RAPIDO!" en el de turno cuando aprieta el tiempo.
 3. **Fichas y pantallitas**: fichas doradas tipo Scrabble desperdigadas de fondo y
    las vidas como pantallita estilo cover.

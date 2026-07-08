@@ -16,12 +16,46 @@ export interface PlayView {
   usedCount: number;
 }
 
-/** Avatar generico compartido por todos (silueta violeta sobre placa gris). La
- *  identidad la da el nombre, no una imagen. Ver DESIGN.md ("Mesa de bomba"). */
-const AVATAR_SVG = `
-  <svg class="wb__avatar-svg" viewBox="0 0 64 64" aria-hidden="true">
-    <circle cx="32" cy="24" r="12"></circle>
-    <path d="M12 56c0-11 9-18 20-18s20 7 20 18z"></path>
+/**
+ * Personaje generico compartido por todos: una bocha violeta con cara que reacciona
+ * al estado (ver DESIGN.md "Fiesta de la bomba"). Todas las variantes de ojos/cejas/
+ * boca/sudor viven en el SVG y el CSS muestra la que corresponde segun las clases de
+ * la tarjeta (`is-turn`, `is-out`, `is-happy`) y el `is-critical` del stage. La
+ * identidad la da el nombre, no una imagen propia.
+ */
+const CHARACTER_SVG = `
+  <svg class="wb__face" viewBox="0 0 64 76" aria-hidden="true">
+    <path class="wb__face-body" d="M32 5C47 5 55 19 55 39 55 62 45 73 32 73 19 73 9 62 9 39 9 19 17 5 32 5Z"/>
+    <ellipse class="wb__face-hi" cx="24" cy="24" rx="9" ry="11"/>
+    <g class="wb__eyes">
+      <ellipse cx="24" cy="34" rx="6.5" ry="7.5" fill="#fff"/>
+      <ellipse cx="40" cy="34" rx="6.5" ry="7.5" fill="#fff"/>
+      <circle cx="25" cy="35" r="3.2" fill="#241033"/>
+      <circle cx="41" cy="35" r="3.2" fill="#241033"/>
+    </g>
+    <g class="wb__brows"><path d="M18 26 30 30"/><path d="M46 26 34 30"/></g>
+    <g class="wb__eyes-dead"><path d="M20 30 28 38M28 30 20 38"/><path d="M36 30 44 38M44 30 36 38"/></g>
+    <path class="wb__sweat" d="M50 29C50 29 45 38 49 42 53 45 55 38 50 29Z"/>
+    <path class="wb__mouth wb__mouth--neutral" d="M26 50Q32 54 38 50"/>
+    <path class="wb__mouth wb__mouth--focus" d="M27 51 37 51"/>
+    <ellipse class="wb__mouth wb__mouth--panic" cx="32" cy="52" rx="5" ry="6"/>
+    <path class="wb__mouth wb__mouth--happy" d="M25 48Q32 59 39 48Z"/>
+    <path class="wb__mouth wb__mouth--dead" d="M26 54Q29 51 32 54 35 57 38 54"/>
+  </svg>`;
+
+/** Corazon (vida) dibujado — nada de emojis (regla del repo). */
+const HEART_SVG = `
+  <svg class="wb__heart" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 21C12 21 3 14.4 3 8.5 3 5.5 5.4 3.5 8 3.5 9.9 3.5 11.4 4.7 12 6 12.6 4.7 14.1 3.5 16 3.5 18.6 3.5 21 5.5 21 8.5 21 14.4 12 21 12 21Z"/>
+  </svg>`;
+
+/** Calavera (eliminado) dibujada. */
+const SKULL_SVG = `
+  <svg class="wb__skull" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 2C6.9 2 3.5 5.6 3.5 10.4 3.5 13 4.9 15.1 6.7 16.3L6.7 19 9 19 9 17 11 17 11 19 13 19 13 17 15 17 15 19 17.3 19 17.3 16.3C19.1 15.1 20.5 13 20.5 10.4 20.5 5.6 17.1 2 12 2Z" fill="#d8d2c8"/>
+    <circle cx="8.6" cy="11" r="2.1" fill="#241033"/>
+    <circle cx="15.4" cy="11" r="2.1" fill="#241033"/>
+    <path d="M12 13.4 10.6 16 13.4 16Z" fill="#241033"/>
   </svg>`;
 
 /** Radio del circulo de jugadores, como fraccion del semilado de la arena. */
@@ -250,17 +284,18 @@ export class Hud {
       card.style.top = `${y}%`;
 
       const badge = p.alive
-        ? `<span class="wb__hearts">${"❤️".repeat(Math.max(0, p.lives))}</span>`
-        : `<span class="wb__skull">\u{1F480}</span>`;
+        ? `<span class="wb__hearts">${HEART_SVG.repeat(Math.max(0, p.lives))}</span>`
+        : `<span class="wb__skull-badge">${SKULL_SVG}</span>`;
 
       // La palabra bajo el avatar: el que tiene el turno arranca vacio (se llena
       // con el tipeo en vivo); el resto muestra su ultima palabra aceptada.
       const word = p.isTurn ? "" : p.lastWord;
 
       card.innerHTML = `
+        <div class="wb__bubble" aria-hidden="true">&iexcl;R&Aacute;PIDO!</div>
         <div class="wb__pname">${escapeHtml(p.nickname)}</div>
         <div class="wb__badge">${badge}</div>
-        <div class="wb__avatar">${AVATAR_SVG}</div>
+        <div class="wb__avatar">${CHARACTER_SVG}</div>
         <div class="wb__word">${escapeHtml(word)}</div>
       `;
       this.arena.appendChild(card);
@@ -353,6 +388,7 @@ export class Hud {
     }
     this.fuseEl.setAttribute("hidden", "");
     this.fuseEl.classList.remove("is-critical");
+    this.stage.classList.remove("is-critical");
     this.bombTimeEl.textContent = "";
     this.wickEl.style.removeProperty("height"); // vuelve al alto full del CSS
   }
@@ -371,7 +407,12 @@ export class Hud {
     this.fuseBar.style.stroke = color;
     this.bombTimeEl.style.color = color;
     this.bombTimeEl.textContent = remaining > 0 ? String(Math.ceil(remaining / 1000)) : "";
-    this.fuseEl.classList.toggle("is-critical", remaining > 0 && frac <= FUSE_CRITICAL);
+    const critical = remaining > 0 && frac <= FUSE_CRITICAL;
+    this.fuseEl.classList.toggle("is-critical", critical);
+    // El stage marca "critico": el jugador de turno entra en panico (cara + gota +
+    // globo "RAPIDO!") via CSS. Lo hace la tickFuse porque el panico depende del
+    // tiempo, no de un cambio de estado del server.
+    this.stage.classList.toggle("is-critical", critical);
     // Al llegar a 0 se detiene y queda vacio: el server difundira la explosion /
     // el nuevo turno, que re-ancla la mecha via setFuse.
     this.fuseRaf = remaining > 0 ? requestAnimationFrame(this.tickFuse) : null;
@@ -424,8 +465,13 @@ export class Hud {
     }
   }
 
-  /** Sello de palabra aceptada bajo el avatar de quien la escribio. */
+  /** Sello de palabra aceptada bajo el avatar + carita feliz breve de quien acerto. */
   flashAccept(player: string, word: string): void {
+    const card = this.cardEls.get(player);
+    if (card) {
+      card.classList.add("is-happy");
+      window.setTimeout(() => card.classList.remove("is-happy"), 800);
+    }
     const el = this.wordEls.get(player);
     if (!el) return;
     el.textContent = word;

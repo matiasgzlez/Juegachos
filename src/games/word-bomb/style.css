@@ -501,29 +501,78 @@ body {
 }
 
 .wb__badge {
-  height: 1.25em;
-  line-height: 1;
-  font-size: clamp(0.8rem, 2vmin, 1rem);
-  letter-spacing: 1px;
-}
-.wb__skull {
-  filter: grayscale(0.2);
-}
-
-.wb__avatar {
-  width: clamp(58px, 11vmin, 84px);
-  height: clamp(58px, 11vmin, 84px);
-  background: var(--plate);
-  border-radius: 8px;
+  height: clamp(14px, 2.6vmin, 19px);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  gap: 2px;
 }
-.wb__avatar-svg {
-  width: 78%;
-  height: 78%;
+.wb__hearts {
+  display: inline-flex;
+  gap: 2px;
+}
+.wb__heart {
+  width: clamp(12px, 2.2vmin, 17px);
+  height: clamp(12px, 2.2vmin, 17px);
+  fill: var(--heart);
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
+}
+.wb__skull {
+  width: clamp(15px, 2.8vmin, 20px);
+  height: clamp(15px, 2.8vmin, 20px);
+}
+
+/* ---------- Personaje (bocha violeta con cara reactiva) ---------- */
+
+.wb__avatar {
+  width: clamp(58px, 11vmin, 84px);
+  height: clamp(64px, 12vmin, 92px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.wb__face {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+  transition: transform 140ms ease;
+}
+.wb__face-body {
   fill: var(--silhouette);
+}
+.wb__face-hi {
+  fill: rgba(255, 255, 255, 0.16);
+}
+/* Rasgos con trazo oscuro comun. */
+.wb__mouth,
+.wb__brows path,
+.wb__eyes-dead path {
+  fill: none;
+  stroke: #241033;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.wb__sweat {
+  fill: #8fd3ff;
+  stroke: #4a90c2;
+  stroke-width: 1;
+}
+/* Por defecto: cara neutral (resto oculto). */
+.wb__brows,
+.wb__eyes-dead,
+.wb__sweat,
+.wb__mouth {
+  display: none;
+}
+.wb__mouth--neutral {
+  display: block;
+}
+.wb__mouth--panic,
+.wb__mouth--happy {
+  fill: #241033;
+  stroke: none;
 }
 
 .wb__word {
@@ -539,17 +588,51 @@ body {
   white-space: nowrap;
 }
 
-/* Turno: nombre verde encendido + avatar resaltado. */
+/* Turno: concentrado (cejas + boca firme), nombre verde y realce del personaje. */
 .wb__player.is-turn .wb__pname {
   color: var(--turn);
 }
-.wb__player.is-turn .wb__avatar {
-  outline: 3px solid var(--turn);
-  outline-offset: 2px;
-  box-shadow: 0 0 18px rgba(70, 209, 106, 0.5);
-}
 .wb__player.is-turn .wb__word {
   color: var(--name);
+}
+.wb__player.is-turn .wb__face {
+  transform: scale(1.1);
+  filter:
+    drop-shadow(0 0 10px rgba(70, 209, 106, 0.65))
+    drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+}
+.wb__player.is-turn .wb__mouth--neutral {
+  display: none;
+}
+.wb__player.is-turn .wb__mouth--focus {
+  display: block;
+}
+.wb__player.is-turn .wb__brows {
+  display: block;
+}
+
+/* Panico: el jugador de turno cuando el tiempo es critico (stage.is-critical): boca
+   abierta + gota de sudor + leve sacudida (el globo lo maneja .wb__bubble). */
+.wb__stage.is-critical .wb__player.is-turn .wb__mouth--focus {
+  display: none;
+}
+.wb__stage.is-critical .wb__player.is-turn .wb__mouth--panic {
+  display: block;
+}
+.wb__stage.is-critical .wb__player.is-turn .wb__sweat {
+  display: block;
+}
+.wb__stage.is-critical .wb__player.is-turn .wb__face {
+  animation: wb-panic 0.28s ease-in-out infinite;
+}
+
+/* Acierto: carita feliz breve (flashAccept pone .is-happy 800ms). */
+.wb__player.is-happy .wb__mouth--neutral,
+.wb__player.is-happy .wb__mouth--focus {
+  display: none;
+}
+.wb__player.is-happy .wb__mouth--happy {
+  display: block;
 }
 
 /* Yo: nombre subrayado (sutil, para ubicarme). */
@@ -558,22 +641,66 @@ body {
   text-underline-offset: 3px;
 }
 
-/* Eliminado: tachado y atenuado. */
+/* Eliminado: cuerpo gris + ojos X + boca muerta, atenuado. */
 .wb__player.is-out {
-  opacity: 0.55;
+  opacity: 0.6;
 }
 .wb__player.is-out .wb__pname,
 .wb__player.is-out .wb__word {
   text-decoration: line-through;
 }
-.wb__player.is-out .wb__avatar-svg {
-  fill: #4a4a4a;
+.wb__player.is-out .wb__face-body {
+  fill: #4a4a52;
+}
+.wb__player.is-out .wb__face-hi,
+.wb__player.is-out .wb__eyes {
+  display: none;
+}
+.wb__player.is-out .wb__eyes-dead {
+  display: block;
+}
+.wb__player.is-out .wb__mouth--neutral {
+  display: none;
+}
+.wb__player.is-out .wb__mouth--dead {
+  display: block;
 }
 
 /* Desconectado (sigue en la ronda): en cursiva y gris. */
 .wb__player.is-off .wb__pname {
   font-style: italic;
   color: var(--muted);
+}
+
+/* Globo "RAPIDO!" del jugador de turno cuando aprieta el tiempo (stage.is-critical). */
+.wb__bubble {
+  position: absolute;
+  bottom: calc(100% - 4px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.5);
+  background: #fff;
+  color: var(--danger);
+  font-weight: 900;
+  font-size: clamp(0.6rem, 1.7vmin, 0.82rem);
+  padding: 3px 9px;
+  border: 2px solid #241033;
+  border-radius: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.wb__bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #241033;
+}
+.wb__stage.is-critical .wb__player.is-turn .wb__bubble {
+  animation: wb-bubble 0.35s ease-out forwards;
 }
 
 /* Rechazo / aceptada bajo el avatar. */
@@ -587,6 +714,33 @@ body {
 .wb__word.is-accept {
   color: var(--turn);
   animation: wb-stamp 0.4s;
+}
+
+@keyframes wb-panic {
+  0%,
+  100% {
+    transform: scale(1.1) translateX(0);
+  }
+  25% {
+    transform: scale(1.12) translateX(-1.5px);
+  }
+  75% {
+    transform: scale(1.12) translateX(1.5px);
+  }
+}
+@keyframes wb-bubble {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.5) translateY(4px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
 }
 
 /* ---------- Cartel de mensaje ---------- */
