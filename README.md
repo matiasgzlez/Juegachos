@@ -60,6 +60,7 @@ Hecho con **Vite + TypeScript** (sin framework) y desplegado como sitio estátic
 | Número Fugaz | Puzzle | Aparece un número un instante y se esfuma: memorizalo y escribilo. Cada acierto suma un dígito y un error termina la partida; tu marca es la mayor cantidad de dígitos que recordás de corrido. | [matiasgzlez](https://github.com/matiasgzlez) |
 | Constelación | Puzzle | Se encienden unas celdas de la grilla un instante: memorizá el patrón y volvé a marcarlas. Cada nivel suma celdas y agranda la grilla; con 3 vidas, tu marca es el nivel más alto que alcanzás. | [matiasgzlez](https://github.com/matiasgzlez) |
 | Prisma | Arcade | Tu bola cambia de color y sube por impulsos: cruzá cada anillo giratorio solo por el arco de tu mismo color. Un roce del color equivocado y perdés; tu marca es cuántos anillos cruzás. | [matiasgzlez](https://github.com/matiasgzlez) |
+| Tinta | Reflejos | El efecto Stroop hecho juego: aparece el nombre de un color pintado con otra tinta y tenés que tocar el color de la tinta, no lo que dice la palabra. El reloj drena, cada acierto suma tiempo; tu marca es cuántas tintas acertás. | [matiasgzlez](https://github.com/matiasgzlez) |
 
 ## Empezar
 
