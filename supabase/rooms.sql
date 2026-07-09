@@ -11,7 +11,7 @@
 create table if not exists public.rooms (
   code          text primary key,                 -- 6 chars, alfabeto A-Z2-9 sin ambiguos (sin O/0/I/1)
   host          text not null,                    -- nickname del anfitrion
-  status        text not null default 'lobby',    -- lobby|playing|results|voting|time_voting|finished
+  status        text not null default 'lobby',    -- lobby|briefing|playing|results|voting|time_voting|finished
   settings      jsonb not null default '{}',      -- { totalRounds, playlist: string[]|null, roundTimeLimitSec, timeVote }
   current_round int  not null default 0,
   current_game  text,
@@ -20,14 +20,14 @@ create table if not exists public.rooms (
   created_at    timestamptz not null default now(),
   constraint code_format check (code ~ '^[A-Z2-9]{6}$'),
   constraint host_len    check (char_length(host) between 1 and 12),
-  constraint status_ok   check (status in ('lobby','playing','results','voting','time_voting','finished'))
+  constraint status_ok   check (status in ('lobby','briefing','playing','results','voting','time_voting','finished'))
 );
 
 -- Migracion idempotente del CHECK de status para salas ya creadas (agrega
--- 'time_voting'). create table ... if not exists no toca tablas existentes.
+-- 'briefing' y 'time_voting'). create table ... if not exists no toca tablas existentes.
 alter table public.rooms drop constraint if exists status_ok;
 alter table public.rooms add constraint status_ok
-  check (status in ('lobby','playing','results','voting','time_voting','finished'));
+  check (status in ('lobby','briefing','playing','results','voting','time_voting','finished'));
 
 -- Jugadores registrados en cada sala. El upsert sobre la PK es el rejoin.
 create table if not exists public.room_players (
@@ -73,19 +73,29 @@ create table if not exists public.room_votes (
 );
 
 -- Estado de partida compartido (juegos de tablero comun, p.ej. Memoria): una
--- fila por (sala, ronda) con el estado completo del juego en jsonb. La columna
--- version implementa concurrencia optimista: cada escritura hace
+-- fila por (sala, ronda, tablero) con el estado completo del juego en jsonb. La
+-- columna version implementa concurrencia optimista: cada escritura hace
 -- update ... where version = <esperada> e incrementa; si no matchea, el
 -- cliente refetchea. Solo escribe el jugador de turno (o el host para
--- destrabar), por convencion del cliente como todo lo demas.
+-- destrabar), por convencion del cliente como todo lo demas. La columna board
+-- permite varios tableros simultaneos en una misma ronda (Conecta 4 empareja a
+-- todos los jugadores en duelos 1v1: un tablero por pareja). Los juegos de un
+-- solo tablero (Memoria, Ta-Te-Ti, Topos) usan siempre board = 0.
 create table if not exists public.room_match_state (
   code       text not null references public.rooms(code) on delete cascade,
   round_no   int  not null,
+  board      int  not null default 0,
   state      jsonb not null,
   version    int  not null default 0,
   updated_at timestamptz not null default now(),
-  primary key (code, round_no)
+  primary key (code, round_no, board)
 );
+
+-- Migracion idempotente para salas creadas antes de la columna board: la agrega
+-- y reescribe la PK para incluirla (los tableros multiples de Conecta 4).
+alter table public.room_match_state add column if not exists board int not null default 0;
+alter table public.room_match_state drop constraint if exists room_match_state_pkey;
+alter table public.room_match_state add constraint room_match_state_pkey primary key (code, round_no, board);
 
 alter table public.rooms enable row level security;
 alter table public.room_players enable row level security;
@@ -193,3 +203,8 @@ create policy "room_match_state_delete_public" on public.room_match_state
 -- puede correr a mano (o con pg_cron):
 --   delete from public.rooms where created_at < now() - interval '2 days';
 -- El on delete cascade arrastra players/rounds/scores/votes.
+
+-- Nota: el "Salon de la fama" (/fame/) NO usa ninguna tabla: es un ranking
+-- derivado en vivo de public.scores (ver src/shared/leaders.ts). Si en una
+-- iteracion anterior se creo public.champions + increment_champion_wins, ya no
+-- se usan y se pueden borrar:  drop function if exists public.increment_champion_wins(text); drop table if exists public.champions;

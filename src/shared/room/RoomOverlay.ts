@@ -26,7 +26,18 @@ const CSS = `
   font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase;
   font-variant-numeric: tabular-nums; box-shadow: 0 5px 0 -2px rgba(17, 17, 17, 0.18);
   pointer-events: none; white-space: nowrap;
+  display: flex; align-items: center; gap: 10px;
 }
+/* Luces de jugadores: un punto por jugador, verde vivo / rojo muerto / gris se fue. */
+.mg-room-strip__lights { display: inline-flex; align-items: center; gap: 5px; }
+.mg-room-strip__light {
+  width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid #111;
+  background: #9a988a; box-sizing: border-box; flex-shrink: 0;
+}
+.mg-room-strip__light--alive { background: #0a9d54; }
+.mg-room-strip__light--dead { background: #c81d4a; }
+.mg-room-strip__light--left { background: #9a988a; }
+.mg-room-strip__light--me { box-shadow: 0 0 0 2px #efeee6, 0 0 0 3.5px #111; }
 .mg-room {
   position: fixed; inset: 0; z-index: 10000; display: flex;
   align-items: center; justify-content: center; padding: 16px;
@@ -73,6 +84,12 @@ const CSS = `
   color: #111; font: inherit; font-size: 15px; font-weight: 700; text-align: left;
   transition: border-color 0.15s ease, transform 0.14s ease, box-shadow 0.15s ease;
 }
+.mg-room__vote-main { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.mg-room__vote-thumb {
+  flex-shrink: 0; width: 46px; height: 46px; border-radius: 10px; overflow: hidden;
+  background: var(--accent); border: 2px solid rgba(17, 17, 17, 0.25);
+}
+.mg-room__vote-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .mg-room__vote:hover { border-color: #111; transform: translateY(-2px); box-shadow: 0 6px 0 -3px #111; }
 .mg-room__vote--mine { border-color: #111; box-shadow: 0 0 0 2.5px #111; }
 .mg-room__vote-count { font-size: 12px; font-weight: 700; color: #6f6d5e; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -90,6 +107,15 @@ const CSS = `
 .mg-room__btn--primary { background: #111; color: #efeee6; }
 .mg-room__btn--primary:hover { background: #00f0ff; color: #111; }
 .mg-room__hint { font-size: 12px; font-weight: 500; color: #6f6d5e; margin-top: 14px; line-height: 1.5; }
+.mg-room__controls {
+  text-align: left; background: #ffffff; border: 2px solid rgba(17, 17, 17, 0.14);
+  border-radius: 12px; padding: 12px 14px; margin: 0 0 16px;
+}
+.mg-room__controls-label { font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #0091a6; margin-bottom: 5px; }
+.mg-room__controls-text { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.mg-room__ready-count { font-size: 12px; font-weight: 700; color: #6f6d5e; margin-top: 12px; font-variant-numeric: tabular-nums; }
+.mg-room__btn:disabled { cursor: default; background: #0a9d54; color: #efeee6; border-color: #0a9d54; opacity: 1; }
+.mg-room__btn:disabled:hover { background: #0a9d54; color: #efeee6; }
 .mg-room__winner {
   display: inline-block; margin-bottom: 18px; padding: 9px 20px; border-radius: 999px;
   background: #111; color: #efeee6; font-size: 15px; font-weight: 800; letter-spacing: 0.3px;
@@ -118,6 +144,13 @@ export interface WaitingEntry {
   scoreText?: string;
 }
 
+/** Una luz de jugador en el strip: viva (verde), muerta (roja) o desconectada (gris). */
+export interface StripLight {
+  state: "alive" | "dead" | "left";
+  /** Resalta la luz propia con un anillo. */
+  me: boolean;
+}
+
 export interface ResultEntry {
   rank: number;
   player: string;
@@ -136,6 +169,8 @@ export interface VoteOption {
   id: string;
   title: string;
   accent?: string;
+  /** Portada del juego (opcional; la votacion de tiempo no la usa). */
+  cover?: string;
 }
 
 const STATE_LABELS: Record<WaitingEntry["state"], string> = {
@@ -148,6 +183,8 @@ export class RoomOverlay {
   private readonly root: HTMLDivElement;
   private readonly boxEl: HTMLDivElement;
   private readonly stripEl: HTMLDivElement;
+  private readonly stripTextEl: HTMLSpanElement;
+  private readonly stripLightsEl: HTMLSpanElement;
   private timeEl: HTMLDivElement | null = null;
   private takeoverEl: HTMLButtonElement | null = null;
 
@@ -160,12 +197,21 @@ export class RoomOverlay {
   private voteLastCounts: Record<string, number> = {};
   private voteLastServerMine: string | null = null;
 
+  // ── Briefing: firma + refs para actualizar el boton "Listo" y el contador
+  // in-place (misma razon que la votacion: no reconstruir el DOM en cada sync).
+  private briefSig: string | null = null;
+  private briefEls: { btn: HTMLButtonElement; count: HTMLDivElement } | null = null;
+
   constructor() {
     ensureStyles();
 
     this.stripEl = document.createElement("div");
     this.stripEl.className = "mg-room-strip";
     this.stripEl.style.display = "none";
+    this.stripTextEl = document.createElement("span");
+    this.stripLightsEl = document.createElement("span");
+    this.stripLightsEl.className = "mg-room-strip__lights";
+    this.stripEl.append(this.stripTextEl, this.stripLightsEl);
 
     this.root = document.createElement("div");
     this.root.className = "mg-room";
@@ -175,6 +221,27 @@ export class RoomOverlay {
     for (const type of ["pointerdown", "mousedown", "click", "touchstart"]) {
       this.root.addEventListener(type, (e) => e.stopPropagation());
     }
+    // Los juegos escuchan Enter/Espacio en `window` para su propio "toca para
+    // empezar" (ver CLAUDE.md, "Enter-to-start countdown"). Ese listener no
+    // sabe nada del overlay: sin esto, tocar Enter mientras se lee el briefing
+    // (o cualquier otra vista del overlay) arranca la partida local antes de
+    // que la ronda pase a "playing", el juego termina solo y reporta un
+    // puntaje para una ronda que todavia no empezo para los demas. Se
+    // intercepta en fase de captura (antes que el listener del juego, que esta
+    // en fase de bubble) mientras el overlay esta visible, salvo que el foco
+    // este en un control propio del overlay (p.ej. el boton "Listo" via teclado).
+    window.addEventListener(
+      "keydown",
+      (e) => {
+        if (this.root.style.display === "none") return;
+        if (e.target instanceof Node && this.root.contains(e.target)) return;
+        if (e.code === "Space" || e.code === "Enter") {
+          e.stopPropagation();
+          e.preventDefault();
+        }
+      },
+      { capture: true },
+    );
 
     this.boxEl = document.createElement("div");
     this.boxEl.className = "mg-room__box";
@@ -183,14 +250,30 @@ export class RoomOverlay {
     document.body.append(this.stripEl, this.root);
   }
 
-  /** Strip superior con codigo / ronda / tiempo. null lo oculta. */
-  setStrip(text: string | null): void {
+  /**
+   * Strip superior con codigo / ronda / tiempo. null lo oculta. `lights` dibuja
+   * un punto por jugador (verde vivo / rojo muerto / gris desconectado); vacio no
+   * muestra ninguno.
+   */
+  setStrip(text: string | null, lights: StripLight[] = []): void {
     if (text === null) {
       this.stripEl.style.display = "none";
       return;
     }
     this.stripEl.style.display = "";
-    this.stripEl.textContent = text;
+    this.stripTextEl.textContent = text;
+    this.renderStripLights(lights);
+  }
+
+  private renderStripLights(lights: StripLight[]): void {
+    this.stripLightsEl.textContent = "";
+    for (const light of lights) {
+      const dot = document.createElement("span");
+      dot.className =
+        `mg-room-strip__light mg-room-strip__light--${light.state}` +
+        (light.me ? " mg-room-strip__light--me" : "");
+      this.stripLightsEl.append(dot);
+    }
   }
 
   /** Actualiza solo el countdown de la vista actual (esperando / votacion). */
@@ -217,6 +300,8 @@ export class RoomOverlay {
     this.voteSig = null;
     this.voteEls = null;
     this.voteOptimisticMine = null;
+    this.briefSig = null;
+    this.briefEls = null;
   }
 
   /**
@@ -398,6 +483,80 @@ export class RoomOverlay {
     }
   }
 
+  /**
+   * Briefing previo a la ronda: de que va el juego + controles, con un boton
+   * "Listo" y un contador de listos. Idempotente por ronda (se re-llama en cada
+   * sync/tick): si ya esta montado para la misma ronda solo refresca el boton y
+   * el contador, sin reconstruir el DOM (evita el titileo y no borra el countdown).
+   */
+  showBriefing(opts: {
+    round: number;
+    roundNo: number;
+    totalRounds: number;
+    gameTitle: string;
+    description: string;
+    controls: string;
+    readyCount: number;
+    totalPlayers: number;
+    iAmReady: boolean;
+    onReady: () => void;
+  }): void {
+    const sig = `${opts.round}:${opts.gameTitle}`;
+    if (this.briefSig === sig && this.briefEls && this.root.style.display !== "none") {
+      this.updateBriefing(opts.readyCount, opts.totalPlayers, opts.iAmReady);
+      return;
+    }
+
+    this.show();
+    this.briefSig = sig;
+    this.addKicker(`Ronda ${opts.roundNo}/${opts.totalRounds} - proximo juego`);
+    this.addTitle(opts.gameTitle);
+    if (opts.description) this.addSubtitle(opts.description);
+
+    if (opts.controls) {
+      const box = document.createElement("div");
+      box.className = "mg-room__controls";
+      const label = document.createElement("div");
+      label.className = "mg-room__controls-label";
+      label.textContent = "Controles";
+      const text = document.createElement("div");
+      text.className = "mg-room__controls-text";
+      text.textContent = opts.controls;
+      box.append(label, text);
+      this.boxEl.append(box);
+    }
+
+    this.addTime();
+
+    const btn = this.makeButton("Listo", () => {
+      // Optimista: se marca listo al toque, sin esperar el round-trip a la DB.
+      this.markReady();
+      opts.onReady();
+    }, "primary");
+    this.boxEl.append(btn);
+
+    const count = document.createElement("div");
+    count.className = "mg-room__ready-count";
+    this.boxEl.append(count);
+
+    this.briefEls = { btn, count };
+    this.updateBriefing(opts.readyCount, opts.totalPlayers, opts.iAmReady);
+  }
+
+  /** Marca el boton "Listo" como confirmado (optimista, antes de la DB). */
+  private markReady(): void {
+    if (!this.briefEls) return;
+    this.briefEls.btn.disabled = true;
+    this.briefEls.btn.textContent = "Listo";
+  }
+
+  /** Refresca boton + contador del briefing sin tocar el resto del DOM. */
+  private updateBriefing(readyCount: number, totalPlayers: number, iAmReady: boolean): void {
+    if (!this.briefEls) return;
+    if (iAmReady) this.markReady();
+    this.briefEls.count.textContent = `${readyCount}/${totalPlayers} listos`;
+  }
+
   /** Votacion (proximo juego o tope de tiempo). */
   showVoting(opts: {
     options: VoteOption[];
@@ -443,13 +602,31 @@ export class RoomOverlay {
       btn.type = "button";
       if (opt.accent) btn.style.setProperty("--accent", opt.accent);
 
+      const main = document.createElement("span");
+      main.className = "mg-room__vote-main";
+
+      // Miniatura de la portada (solo la votacion de juego la trae). Si la imagen
+      // falla, queda el recuadro con el color del juego.
+      if (opt.cover) {
+        const thumb = document.createElement("span");
+        thumb.className = "mg-room__vote-thumb";
+        const img = document.createElement("img");
+        img.src = opt.cover;
+        img.alt = "";
+        img.loading = "lazy";
+        img.addEventListener("error", () => img.remove());
+        thumb.append(img);
+        main.append(thumb);
+      }
+
       const title = document.createElement("span");
       title.textContent = opt.title;
+      main.append(title);
 
       const count = document.createElement("span");
       count.className = "mg-room__vote-count";
 
-      btn.append(title, count);
+      btn.append(main, count);
       btn.addEventListener("click", () => {
         // Resaltado optimista: se marca al toque, sin esperar el round-trip a la
         // DB. El refresh posterior lo confirma (y corrige los contadores).

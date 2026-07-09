@@ -5,6 +5,8 @@ import { getScoring } from "./shared/scoring";
 import { fetchTop } from "./shared/leaderboard";
 import { isLeaderboardEnabled } from "./shared/supabase";
 import { recordPlay, fetchPlayCounts, cachedPlayCounts } from "./shared/plays";
+import { fetchGameLeaders } from "./shared/leaders";
+import { getNickname, setNickname, NICKNAME_MAX } from "./shared/nickname";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 const roomsOn = isLeaderboardEnabled();
@@ -15,10 +17,41 @@ const nav = document.createElement("nav");
 nav.className = "topbar";
 nav.innerHTML = `
   <a class="topbar__logo" href="/"><img src="/juegachos.png" alt="JUEGACHOS" /></a>
-  <div class="topbar__links">
-    <a href="/" class="is-active">Juegos</a>
-    ${roomsOn ? `<a href="/rooms/">Salas</a>` : ""}
+  <div class="topbar__right">
+    <label class="topbar__name">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4">
+        <circle cx="12" cy="8" r="4"></circle>
+        <path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6"></path>
+      </svg>
+      <input type="text" class="topbar__name-input" placeholder="Tu nombre" autocomplete="off" maxlength="${NICKNAME_MAX}" />
+    </label>
+    <div class="topbar__links">
+      <a href="/" class="is-active">Juegos</a>
+      ${roomsOn ? `<a href="/rooms/">Salas</a>` : ""}
+    </div>
   </div>
+`;
+
+// ---------- Banner de la comunidad de Discord ----------
+
+const discordBanner = document.createElement("a");
+discordBanner.className = "discord-banner";
+discordBanner.href = "https://discord.gg/pdFQVrKXN";
+discordBanner.target = "_blank";
+discordBanner.rel = "noopener noreferrer";
+discordBanner.innerHTML = `
+  <div class="discord-banner__glow"></div>
+  <div class="discord-banner__text">
+    <span class="discord-banner__kicker">Comunidad</span>
+    <h2 class="discord-banner__title">&iexcl;Sumate al Discord!</h2>
+    <p class="discord-banner__subtitle">Enter&aacute;te de los juegos nuevos, coordin&aacute; partidas y compart&iacute; tus r&eacute;cords con la comunidad.</p>
+  </div>
+  <span class="discord-banner__cta">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+      <path d="M20.317 4.369A19.79 19.79 0 0 0 15.885 3c-.2.36-.43.842-.588 1.226a18.27 18.27 0 0 0-5.594 0A12.6 12.6 0 0 0 9.11 3a19.74 19.74 0 0 0-4.435 1.369C1.86 8.59 1.096 12.71 1.478 16.77a19.9 19.9 0 0 0 6.073 3.08c.49-.669.927-1.38 1.302-2.128a12.9 12.9 0 0 1-2.05-.988c.172-.126.34-.257.502-.392a14.2 14.2 0 0 0 12.19 0c.164.14.332.271.502.392-.654.388-1.343.72-2.052.99.375.746.81 1.457 1.3 2.126a19.88 19.88 0 0 0 6.076-3.08c.448-4.706-.766-8.79-3.006-12.401ZM8.02 14.331c-1.183 0-2.157-1.086-2.157-2.42 0-1.334.955-2.42 2.157-2.42 1.21 0 2.176 1.095 2.157 2.42 0 1.334-.955 2.42-2.157 2.42Zm7.96 0c-1.183 0-2.157-1.086-2.157-2.42 0-1.334.955-2.42 2.157-2.42 1.21 0 2.176 1.095 2.157 2.42 0 1.334-.946 2.42-2.157 2.42Z"/>
+    </svg>
+    Unirme <span class="discord-banner__arrow">&rarr;</span>
+  </span>
 `;
 
 // ---------- Titulo + buscador ----------
@@ -27,15 +60,31 @@ const hero = document.createElement("header");
 hero.className = "hero";
 hero.innerHTML = `
   <h1 class="hero__title">Todos los juegos</h1>
-  <label class="hero__search">
-    <input type="search" placeholder="Buscar" autocomplete="off" />
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4">
-      <circle cx="11" cy="11" r="7"></circle>
-      <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
-    </svg>
-  </label>
+  <div class="hero__tools">
+    <label class="hero__search">
+      <input type="search" placeholder="Buscar" autocomplete="off" />
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4">
+        <circle cx="11" cy="11" r="7"></circle>
+        <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+      </svg>
+    </label>
+  </div>
 `;
-const searchInput = hero.querySelector<HTMLInputElement>("input")!;
+const searchInput = hero.querySelector<HTMLInputElement>(".hero__search input")!;
+
+// Editor del nombre global: lo que se guarda aca (localStorage) es lo que cada
+// juego usa para enviar el puntaje al ranking sin volver a preguntar.
+const nameInput = nav.querySelector<HTMLInputElement>(".topbar__name-input")!;
+nameInput.value = getNickname() ?? "";
+const saveName = () => {
+  const saved = setNickname(nameInput.value);
+  nameInput.value = saved ?? getNickname() ?? "";
+};
+nameInput.addEventListener("change", saveName);
+nameInput.addEventListener("blur", saveName);
+nameInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") nameInput.blur();
+});
 
 // ---------- Filtros por categoria ----------
 
@@ -359,6 +408,7 @@ footer.innerHTML = `
       <span class="site-footer__links-title">Navegar</span>
       <a href="/">Juegos<span class="site-footer__arrow">&rarr;</span></a>
       ${roomsOn ? `<a href="/rooms/">Salas<span class="site-footer__arrow">&rarr;</span></a>` : ""}
+      <a href="https://discord.gg/pdFQVrKXN" target="_blank" rel="noopener noreferrer">Discord<span class="site-footer__arrow">&rarr;</span></a>
     </nav>
   </div>
   <div class="site-footer__bottom">
@@ -367,13 +417,93 @@ footer.innerHTML = `
   </div>
 `;
 
+// Fila de banners: Discord a la izquierda y (si aplica) Modo Salas a la derecha.
+const bannersRow = document.createElement("div");
+bannersRow.className = "banners-row";
+bannersRow.append(discordBanner);
+if (roomsOn) bannersRow.append(roomsBanner);
+
+// Banner del Salon de la fama: recuadro compacto (estilo el de Salas) que lleva
+// a la pagina dedicada /fame/. Muestra un mini-preview con los 3 primeros.
+const fameBanner = document.createElement("a");
+if (roomsOn) {
+  fameBanner.className = "fame-banner";
+  fameBanner.href = "/fame/";
+  fameBanner.innerHTML = `
+    <div class="fame-banner__glow"></div>
+    <div class="fame-banner__text">
+      <span class="fame-banner__kicker">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true">
+          <path d="M4.5 16 L6.2 8.4 L9.4 11.8 L12 6.6 L14.6 11.8 L17.8 8.4 L19.5 16 Z" />
+          <rect x="5" y="17.2" width="14" height="2.4" rx="1.2" />
+          <circle cx="6.2" cy="7.3" r="1.05" />
+          <circle cx="12" cy="5.5" r="1.25" />
+          <circle cx="17.8" cy="7.3" r="1.05" />
+        </svg>
+        Sal&oacute;n de la fama
+      </span>
+      <h2 class="fame-banner__title">L&iacute;deres de los juegos</h2>
+      <p class="fame-banner__subtitle">Mir&aacute; qui&eacute;nes lideran el ranking de m&aacute;s juegos.</p>
+    </div>
+    <div class="fame-banner__podium" aria-hidden="true"></div>
+    <span class="fame-banner__cta">Ver ranking <span class="fame-banner__arrow">&rarr;</span></span>
+  `;
+}
+
 const main = document.createElement("main");
 main.className = "page";
+main.append(bannersRow);
+if (roomsOn) main.append(fameBanner);
 main.append(hero, filtersBar);
-if (roomsOn) main.append(roomsBanner);
 main.append(grid, empty);
 
 app.append(nav, main, footer);
+
+// ---------- Banner del salon de la fama: preview del podio ----------
+
+// Rellena el mini-podio del banner con los 3 lideres top (el mismo podio de
+// /fame/ pero en chico: 2.o - 1.o - 3.o, campeon dorado y elevado). Para ver la
+// lista completa se entra a /fame/. No-op sin credenciales / sin datos.
+if (roomsOn) {
+  void fetchGameLeaders().then(({ ranking }) => {
+    if (ranking.length === 0) return;
+    const podium = fameBanner.querySelector<HTMLElement>(".fame-banner__podium");
+    if (!podium) return;
+    const crown = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+      <path d="M4.5 16 L6.2 8.4 L9.4 11.8 L12 6.6 L14.6 11.8 L17.8 8.4 L19.5 16 Z" />
+      <rect x="5" y="17.2" width="14" height="2.4" rx="1.2" />
+      <circle cx="6.2" cy="7.3" r="1.05" /><circle cx="12" cy="5.5" r="1.25" /><circle cx="17.8" cy="7.3" r="1.05" />
+    </svg>`;
+    const esc = (s: string) => {
+      const d = document.createElement("div");
+      d.textContent = s;
+      return d.innerHTML;
+    };
+    const initialOf = (name: string) => {
+      const ch = name.trim().charAt(0);
+      return ch ? ch.toUpperCase() : "?";
+    };
+    const top3 = ranking.slice(0, 3);
+    // Orden visual del podio: 2.o - 1.o - 3.o (campeon al centro).
+    const order = [
+      { row: top3[1], place: 2 },
+      { row: top3[0], place: 1 },
+      { row: top3[2], place: 3 },
+    ].filter((o) => o.row);
+    podium.innerHTML = order
+      .map(
+        ({ row, place }) => `
+        <div class="fbp__slot fbp__slot--p${place}">
+          ${place === 1 ? `<span class="fbp__crown">${crown}</span>` : ""}
+          <span class="fbp__av">${initialOf(row.player)}</span>
+          <span class="fbp__name">${esc(row.player)}</span>
+          <span class="fbp__count">${row.games} <em>juegos</em></span>
+          <span class="fbp__base">${place}</span>
+        </div>`,
+      )
+      .join("");
+  });
+}
 
 // Reordena las cards segun el modo actual: mueve los nodos existentes al nuevo
 // orden (no los recrea) y refresca el stagger `--i`.

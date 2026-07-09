@@ -16,6 +16,7 @@ Hecho con **Vite + TypeScript** (sin framework) y desplegado como sitio estátic
 | Beat Fever | Ritmo | Tocá las notas justo al cruzar la línea y encadená combos. | [Facu-Basualdo](https://github.com/Facu-Basualdo) |
 | Bounce Rush | Arcade | Saltá entre plataformas y cambiá de carril a tiempo. | [Facu-Basualdo](https://github.com/Facu-Basualdo) |
 | Reflex | Reflejos | Poné a prueba tus reflejos en 5 rondas de tiempo de reacción. | [Facu-Basualdo](https://github.com/Facu-Basualdo) |
+| Al Centro | Reflejos | Frená la regla que barre de lado a lado y acelera cada ronda; cuanto más al centro, más puntos. El puntaje final es el promedio de 5 rondas. | [Facu-Basualdo](https://github.com/Facu-Basualdo) |
 | Skyline | Precisión | Levantá el rascacielos más alto sin perder el equilibrio. | [Facu-Basualdo](https://github.com/Facu-Basualdo) |
 | Numerix | Puzzle | Ordená los números deslizando filas o columnas. | [Facu-Basualdo](https://github.com/Facu-Basualdo) |
 | Asteroides | Arcade | El clásico: navegá con inercia y dispará a las rocas. | [Facu-Basualdo](https://github.com/Facu-Basualdo) |
@@ -48,6 +49,16 @@ Hecho con **Vite + TypeScript** (sin framework) y desplegado como sitio estátic
 | Timber! | Reflejos | Talá el árbol lo más rápido posible cambiando de lado para esquivar las ramas antes de que se te acabe el tiempo. | [Facu-Basualdo](https://github.com/Facu-Basualdo) |
 | Puerco Araña | Arcade | Lanzá la telaraña, columpiate entre los edificios con impulso de péndulo y soltate a toda velocidad para llegar lo más lejos que puedas. | [juanr8234](https://github.com/juanr8234) |
 | Trench Rush | Arcade | Metete en la trinchera espacial con tu caza y aguantá el asalto: derribá drones, esquivá rayos de energía que cruzan la trinchera y juntá baterías de escudo mientras la cosa se pone cada vez más rápida. | [Facu-Basualdo](https://github.com/Facu-Basualdo) |
+| Circuit Breaker | Precisión | Llevá la señal por el circuito desde el pad de origen hasta el conector destino sin rozar las paredes: si chocás, volvés al inicio. Tu marca es el tiempo que tardás y las veces que chocaste. Inspirado en el Circuit Breaker de GTA Online. | [Facu-Basualdo](https://github.com/Facu-Basualdo) |
+| Ring Runner | Precisión | Un punto gira por un anillo blanco con una zona negra; tocá justo cuando la cruza. Cada acierto achica la zona y acelera el punto, así que aguantá el ritmo lo más que puedas. | [Facu-Basualdo](https://github.com/Facu-Basualdo) |
+| Final Sentence | Reflejos | Despertás con un revólver en la sien: escribí cada frase sin fallar porque cada error carga una bala en el tambor. Al terminar la frase se jala el gatillo, una ruleta rusa. Sobreviví y sumá frases. | [Facu-Basualdo](https://github.com/Facu-Basualdo) |
+| Pulso de Acero | Precisión | Una mano sostiene una katana en un dojo a oscuras: mantené el filo en equilibrio (péndulo invertido) inclinando izquierda y derecha, y aguantá lo máximo posible antes de que se caiga. Tu marca es el tiempo que la mantenés parada. | [matiasgzlez](https://github.com/matiasgzlez) |
+| Memoria de Color | Precisión | Un color aparece unos segundos y desaparece: recreálo de memoria moviendo los deslizadores de matiz, saturación y brillo. Tres rondas y tu puntaje es el promedio de aciertos. Descubrí qué tan fiable es tu ojo. | [matiasgzlez](https://github.com/matiasgzlez) |
+| Hole in None | Precisión | Tres hoyos de minigolf cartoon en 3D con molinetes, bumpers y atajos arriesgados. Arrastrá desde la pelota para apuntar, soltá para pegar y embocá en la menor cantidad de golpes. | [emi1i0](https://github.com/emi1i0) |
+| Bomba Palabra | Party | Bomba de palabras por turnos: aparece un fragmento (una sílaba o combo de letras) y tenés hasta que se agote la mecha para escribir una palabra real que lo contenga. Si explota perdés una vida; el último en pie gana. Solo se juega en salas con amigos. | [Facu-Basualdo](https://github.com/Facu-Basualdo) |
+| Cálculo Flash | Puzzle | Aparecen números de a uno que se van sumando y restando; memorizalos y al final escribí el resultado. En solitario las rondas suben de dificultad y un error termina la partida; en salas todos ven la misma cuenta y ganás puntos por acercarte al resultado. | [Facu-Basualdo](https://github.com/Facu-Basualdo) |
+| Número Fugaz | Puzzle | Aparece un número un instante y se esfuma: memorizalo y escribilo. Cada acierto suma un dígito y un error termina la partida; tu marca es la mayor cantidad de dígitos que recordás de corrido. | [matiasgzlez](https://github.com/matiasgzlez) |
+| Constelación | Puzzle | Se encienden unas celdas de la grilla un instante: memorizá el patrón y volvé a marcarlas. Cada nivel suma celdas y agranda la grilla; con 3 vidas, tu marca es el nivel más alto que alcanzás. | [matiasgzlez](https://github.com/matiasgzlez) |
 
 ## Empezar
 

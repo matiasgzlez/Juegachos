@@ -409,6 +409,41 @@ a {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
 }
 
+/* ---------- Buscador + filtros de la grilla de juegos ---------- */
+.playlist-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.playlist-clear {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 2px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.playlist-clear:hover {
+  background: var(--ink);
+  color: var(--card);
+}
+
+.playlist-search {
+  display: block;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.playlist-cats {
+  margin-bottom: 14px;
+}
+
 /* ---------- Hint / error ---------- */
 .hint {
   font-size: 12px;
