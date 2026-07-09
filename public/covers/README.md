@@ -175,3 +175,9 @@ Square 1:1 video game cover art, bold indie game key art style, vibrant saturate
 ```text
 Square 1:1 video game cover art, bold indie game key art style, vibrant saturated colors, dramatic lighting, clean composition with a strong focal subject, slight retro-arcade flavor, high detail digital illustration, no watermark, no borders. A chunky 3D grid of rounded glossy blocks floating on a deep navy-blue background with a soft violet glow; several blocks light up bright glowing orange forming a constellation-like pattern, each block with a thick hard drop shadow underneath giving a playful sticker-like 3D relief, small sparkles and faint light trails linking the lit blocks. Warm orange and purple-violet palette over deep navy, energetic and playful arcade mood, bold and clean. The game title "CONSTELACIÓN" is integrated into the artwork as a bold stylized videogame logo with a thick outline and offset shadow, large and readable, spelled exactly "CONSTELACIÓN".
 ```
+
+## Prisma — guardar como `color-switch.jpg`
+
+```text
+Square 1:1 video game cover art, bold indie game key art style, vibrant saturated colors, dramatic lighting, clean composition with a strong focal subject, slight retro-arcade flavor, high detail digital illustration, no watermark, no borders. A glossy glowing ball on a near-black background passing through a rotating ring split into four bright neon arcs (hot pink, cyan, lime-green, amber); the ball glows in one of those colors with a soft halo and a white specular highlight, and more colorful four-color rings recede upward with small sparkles and light trails. Electric four-color neon spectrum palette (hot pink, cyan, lime, amber) over deep near-black, energetic playful arcade mood, high contrast. The game title "PRISMA" is integrated into the artwork as a bold stylized videogame logo with a rainbow spectrum gradient fill and a thick dark outline, large and readable, spelled exactly "PRISMA".
+```

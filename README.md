@@ -59,6 +59,7 @@ Hecho con **Vite + TypeScript** (sin framework) y desplegado como sitio estátic
 | Cálculo Flash | Puzzle | Aparecen números de a uno que se van sumando y restando; memorizalos y al final escribí el resultado. En solitario las rondas suben de dificultad y un error termina la partida; en salas todos ven la misma cuenta y ganás puntos por acercarte al resultado. | [Facu-Basualdo](https://github.com/Facu-Basualdo) |
 | Número Fugaz | Puzzle | Aparece un número un instante y se esfuma: memorizalo y escribilo. Cada acierto suma un dígito y un error termina la partida; tu marca es la mayor cantidad de dígitos que recordás de corrido. | [matiasgzlez](https://github.com/matiasgzlez) |
 | Constelación | Puzzle | Se encienden unas celdas de la grilla un instante: memorizá el patrón y volvé a marcarlas. Cada nivel suma celdas y agranda la grilla; con 3 vidas, tu marca es el nivel más alto que alcanzás. | [matiasgzlez](https://github.com/matiasgzlez) |
+| Prisma | Arcade | Tu bola cambia de color y sube por impulsos: cruzá cada anillo giratorio solo por el arco de tu mismo color. Un roce del color equivocado y perdés; tu marca es cuántos anillos cruzás. | [matiasgzlez](https://github.com/matiasgzlez) |
 
 ## Empezar
 
